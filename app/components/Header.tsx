@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Search, Menu, X } from "lucide-react"
+import { Menu, X, Instagram, Facebook, Youtube } from "lucide-react"
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -24,62 +24,76 @@ const Header = () => {
   }, [])
 
   return (
-    <header className="md:fixed top-0 left-0 right-0  shadow-md">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold text-white">
-          <img src="images/vatika-logo.png" alt="Vatika Bestie Bottle" className="h-14" />
+    <header className="w-full bg-[#76b900] shadow-md">
+      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
+        <Link href="/" className="flex items-center">
+          <img src="/images/vatika-logo.png" alt="Vatika" className="h-16" />
         </Link>
 
-        <nav className="hidden md:flex space-x-6">
-          {["Home", "Tips", "Gallery", "About", "Contact"].map((item) => (
-            <Link
-              key={item}
-              href={`/${item.toLowerCase()}`}
-              className="text-white hover:text-pink-950 transition-colors"
-            >
-              {item}
+        <div className="hidden md:flex items-center space-x-4">
+          {/* Social Media Icons */}
+          <div className="flex space-x-3 mr-6">
+            <Link href="#" className="text-white hover:text-gray-200">
+              <Instagram size={20} />
             </Link>
-          ))}
-        </nav>
+            <Link href="#" className="text-white hover:text-gray-200">
+              <Facebook size={20} />
+            </Link>
+            <Link href="#" className="text-white hover:text-gray-200">
+              <Youtube size={20} />
+            </Link>
+          </div>
 
-        {/* <div className="hidden md:flex items-center">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="px-3 py-1 rounded-l-md border-2 border-pink-300 focus:outline-none focus:border-pink-500"
-          />
-          <button className="bg-pink-500 text-white px-3 py-1 rounded-r-md hover:bg-pink-600 transition-colors">
-            <Search size={20} />
-          </button>
-        </div> */}
+          {/* Navigation */}
+          <nav className="flex space-x-6">
+            {[
+              { name: "HOME", path: "/" },
+              { name: "ABOUT", path: "/about" },
+              { name: "VIDEOS", path: "/videos" },
+              { name: "CONTACT", path: "/contact" },
+            ].map((item) => (
+              <Link
+                key={item.name}
+                href={item.path}
+                className="text-white uppercase font-medium text-sm hover:underline"
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        <button className="md:hidden text-pink-800" onClick={toggleMenu}>
+        <button className="md:hidden text-white" onClick={toggleMenu}>
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {isMenuOpen && (
-        <div ref={menuRef} className="md:hidden bg-pink-50 shadow-lg absolute top-16 left-0 right-0 z-10">
-          <nav className="flex flex-col space-y-4 p-4">
-            {["Home", "Tips", "Gallery", "About", "Contact"].map((item) => (
-              <Link
-                key={item}
-                href={`/${item.toLowerCase()}`}
-                className="text-pink-800 hover:text-pink-600 transition-colors"
-              >
-                {item}
+        <div ref={menuRef} className="md:hidden bg-[#8dd100] shadow-lg absolute top-16 left-0 right-0 z-20">
+          <div className="flex justify-center py-3">
+            <div className="flex space-x-6">
+              <Link href="#" className="text-white">
+                <Instagram size={20} />
+              </Link>
+              <Link href="#" className="text-white">
+                <Facebook size={20} />
+              </Link>
+              <Link href="#" className="text-white">
+                <Youtube size={20} />
+              </Link>
+            </div>
+          </div>
+          <nav className="flex flex-col items-center space-y-4 p-4">
+            {[
+              { name: "HOME", path: "/" },
+              { name: "ABOUT", path: "/" },
+              { name: "VIDEOS", path: "/" },
+              { name: "CONTACT", path: "/" },
+            ].map((item) => (
+              <Link key={item.name} href={item.path} className="text-white uppercase font-medium">
+                {item.name}
               </Link>
             ))}
-            {/* <div className="flex items-center mt-4">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="flex-grow px-3 py-1 rounded-l-md border-2 border-pink-300 focus:outline-none focus:border-pink-500"
-              />
-              <button className="bg-pink-500 text-white px-3 py-1 rounded-r-md hover:bg-pink-600 transition-colors">
-                <Search size={20} />
-              </button>
-            </div> */}
           </nav>
         </div>
       )}
@@ -88,4 +102,3 @@ const Header = () => {
 }
 
 export default Header
-
