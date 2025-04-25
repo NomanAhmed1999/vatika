@@ -4,10 +4,11 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import Header from "./components/Header"
 
+
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Pink Landing Page",
+  title: "Vatika Compaign",
   description: "A responsive landing page with a pink theme",
     generator: 'v0.dev'
 }
@@ -20,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Header />
+        {/* <Header /> */}
         {children}
       </body>
     </html>

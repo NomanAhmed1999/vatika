@@ -33,16 +33,17 @@ const Header = () => {
         <div className="hidden md:flex items-center space-x-4">
           {/* Social Media Icons */}
           <div className="flex space-x-3 mr-6">
-            <Link href="#" className="text-white hover:text-gray-200">
+            <Link href="https://www.instagram.com" target="_blank" className="text-white hover:text-gray-200">
               <Instagram size={20} />
             </Link>
-            <Link href="#" className="text-white hover:text-gray-200">
+            <Link href="https://www.facebook.com" target="_blank" className="text-white hover:text-gray-200">
               <Facebook size={20} />
             </Link>
-            <Link href="#" className="text-white hover:text-gray-200">
+            <Link href="https://www.youtube.com" target="_blank" className="text-white hover:text-gray-200">
               <Youtube size={20} />
             </Link>
           </div>
+
 
           {/* Navigation */}
           <nav className="flex space-x-6">
@@ -72,23 +73,23 @@ const Header = () => {
         <div ref={menuRef} className="md:hidden bg-[#8dd100] shadow-lg absolute top-16 left-0 right-0 z-20">
           <div className="flex justify-center py-3">
             <div className="flex space-x-6">
-              <Link href="#" className="text-white">
-                <Instagram size={20} />
-              </Link>
-              <Link href="#" className="text-white">
-                <Facebook size={20} />
-              </Link>
-              <Link href="#" className="text-white">
-                <Youtube size={20} />
-              </Link>
+            <Link href="https://www.instagram.com" target="_blank" className="text-white hover:text-gray-200">
+              <Instagram size={20} />
+            </Link>
+            <Link href="https://www.facebook.com" target="_blank" className="text-white hover:text-gray-200">
+              <Facebook size={20} />
+            </Link>
+            <Link href="https://www.youtube.com" target="_blank" className="text-white hover:text-gray-200">
+              <Youtube size={20} />
+            </Link>
             </div>
           </div>
           <nav className="flex flex-col items-center space-y-4 p-4">
             {[
               { name: "HOME", path: "/" },
-              { name: "ABOUT", path: "/" },
-              { name: "VIDEOS", path: "/" },
-              { name: "CONTACT", path: "/" },
+              { name: "ABOUT", path: "/about" },
+              { name: "VIDEOS", path: "/videos" },
+              { name: "CONTACT", path: "/contact" },
             ].map((item) => (
               <Link key={item.name} href={item.path} className="text-white uppercase font-medium">
                 {item.name}
