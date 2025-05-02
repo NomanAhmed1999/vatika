@@ -235,7 +235,6 @@ export default function Home() {
         // Process the cropped image
         const formData = new FormData()
         formData.append("image", croppedFile)
-        formData.append("background_color", "#8CC63F") // Using the green color from your theme
 
         const response = await postWithFile("api/image-processing/", formData, null)
         if (!response.ok) {
