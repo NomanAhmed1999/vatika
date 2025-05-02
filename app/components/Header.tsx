@@ -24,8 +24,8 @@ const Header = () => {
   }, [])
 
   return (
-    <header className="w-full bg-[#76b900] shadow-md">
-      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
+<header className="w-full" style={{ background: "linear-gradient(100deg, #76b900 15%, #8dd100 85%)" }}>
+   <div className="container mx-auto px-4 py-2 flex items-center justify-between">
         <Link href="/" className="flex items-center">
           <img src="/images/vatika-logo.png" alt="Vatika" className="h-16" />
         </Link>

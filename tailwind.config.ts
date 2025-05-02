@@ -11,7 +11,7 @@ const config: Config = {
   theme: {
   	extend: {
 		fontFamily: {
-			helvetica: ['Helvetica', 'Arial', 'sans-serif'],
+			pacifico: ['Pacifico', 'cursive'],
 
 			
 		  },

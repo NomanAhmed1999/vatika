@@ -1,5 +1,6 @@
 "use client"
 import { motion } from "framer-motion"
+import { useState } from "react"
 import { Check, Clock, Download, Eye, LogOut, RefreshCw, Search, User, Users } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -28,73 +29,7 @@ const mockSubmissions = [
     bestieImage: "/diverse-group-city.png",
     status: "delivered",
     createdAt: "2023-05-15T10:30:00Z",
-  },
-  {
-    id: "sub_1002",
-    firstName: "Urooba",
-    lastName: "Ahmed",
-    email: "urooba@example.com",
-    phoneNumber: "+92 301 7654321",
-    address: "Apartment 12, Block B, Lahore, Pakistan",
-    bestieImage: "/diverse-group-city.png",
-    status: "pending",
-    createdAt: "2023-05-16T14:20:00Z",
-  },
-  {
-    id: "sub_1003",
-    firstName: "Fatima",
-    lastName: "Ali",
-    email: "fatima@example.com",
-    phoneNumber: "+92 302 9876543",
-    address: "Villa 8, Phase 2, Islamabad, Pakistan",
-    bestieImage: "/diverse-group-city.png",
-    status: "delivered",
-    createdAt: "2023-05-17T09:15:00Z",
-  },
-  {
-    id: "sub_1004",
-    firstName: "Ayesha",
-    lastName: "Hassan",
-    email: "ayesha@example.com",
-    phoneNumber: "+92 303 4567890",
-    address: "House #15, Street 3, Peshawar, Pakistan",
-    bestieImage: "/diverse-group-city.png",
-    status: "pending",
-    createdAt: "2023-05-18T16:45:00Z",
-  },
-  {
-    id: "sub_1005",
-    firstName: "Zainab",
-    lastName: "Malik",
-    email: "zainab@example.com",
-    phoneNumber: "+92 304 1122334",
-    address: "Flat 7, Tower C, Quetta, Pakistan",
-    bestieImage: "/diverse-group-city.png",
-    status: "delivered",
-    createdAt: "2023-05-19T11:30:00Z",
-  },
-  {
-    id: "sub_1006",
-    firstName: "Sana",
-    lastName: "Raza",
-    email: "sana@example.com",
-    phoneNumber: "+92 305 5566778",
-    address: "House #28, Block D, Multan, Pakistan",
-    bestieImage: "/diverse-group-city.png",
-    status: "pending",
-    createdAt: "2023-05-20T13:10:00Z",
-  },
-  {
-    id: "sub_1007",
-    firstName: "Hina",
-    lastName: "Javed",
-    email: "hina@example.com",
-    phoneNumber: "+92 306 8899001",
-    address: "Apartment 5, Street 9, Faisalabad, Pakistan",
-    bestieImage: "/diverse-group-city.png",
-    status: "delivered",
-    createdAt: "2023-05-21T10:20:00Z",
-  },
+  }
 ]
 
 export default function AdminDashboard() {
@@ -103,6 +38,23 @@ export default function AdminDashboard() {
     name: "Admin User",
     email: "admin@vatika.com",
   }
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const entriesPerPage = 10
+
+  // Calculate the total number of pages
+  const totalPages = Math.ceil(mockSubmissions.length / entriesPerPage)
+
+  // Get the submissions for the current page
+  const currentSubmissions = mockSubmissions.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage
+  )
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+  
 
   return (
     <div className="min-h-screen bg-[#F5F8EF]">
@@ -224,7 +176,7 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockSubmissions.map((submission) => (
+                  {currentSubmissions.map((submission) => (
                     <TableRow key={submission.id} className="hover:bg-[#F5F8EF]/50">
                       <TableCell>
                         <div>
@@ -384,34 +336,37 @@ export default function AdminDashboard() {
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious className="cursor-pointer" />
+                    <PaginationPrevious
+                      className={`cursor-pointer ${currentPage === 1 ? "opacity-50 pointer-events-none" : ""}`}
+                      onClick={() => handlePageChange(currentPage - 1)}
+                    />
                   </PaginationItem>
 
-                  <PaginationItem>
-                    <PaginationLink isActive className="bg-[#8CC63F] text-white">
-                      1
-                    </PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink className="cursor-pointer">2</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink className="cursor-pointer">3</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink className="cursor-pointer">5</PaginationLink>
-                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, index) => (
+                    <PaginationItem key={index}>
+                      <PaginationLink
+                        isActive={currentPage === index + 1}
+                        className={`cursor-pointer ${currentPage === index + 1 ? "bg-[#8CC63F] text-white" : ""}`}
+                        onClick={() => handlePageChange(index + 1)}
+                      >
+                        {index + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
 
                   <PaginationItem>
-                    <PaginationNext className="cursor-pointer" />
+                    <PaginationNext
+                      className={`cursor-pointer ${currentPage === totalPages ? "opacity-50 pointer-events-none" : ""}`}
+                      onClick={() => handlePageChange(currentPage + 1)}
+                    />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
 
-              <div className="text-xs text-[#003300]/70 text-center mt-2">Showing 1 to 7 of 42 entries</div>
+              <div className="text-xs text-[#003300]/70 text-center mt-2">
+                Showing {(currentPage - 1) * entriesPerPage + 1} to{" "}
+                {Math.min(currentPage * entriesPerPage, mockSubmissions.length)} of {mockSubmissions.length} entries
+              </div>
             </div>
           </div>
         </motion.div>
