@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { postApi } from "@/lib/apiService"
-import useAuthStore from "@/app/store/store"
 
 export default function AdminLogin() {
   const searchParams = useSearchParams()
@@ -21,7 +20,6 @@ export default function AdminLogin() {
   const { toast } = useToast()
 
   useEffect(() => {
-    // Get email from URL if it exists
     const urlEmail = searchParams.get("email")
     if (urlEmail) {
       setEmail(urlEmail)
@@ -29,46 +27,40 @@ export default function AdminLogin() {
   }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-  
+    e.preventDefault()
+    setIsLoading(true)
+
     try {
-      const response = await postApi("api/login/", { email, password });
-  
-      console.log(response);  // Log the response to make sure the token is present
-  
-      if (response && response.data && response.data.access_token) {
-        // Store the token using Zustand
-        useAuthStore.getState().setToken(response.data.access_token);
-  
-        // Redirect to the dashboard
-        router.push("/admin/dashboard");
-  
-        // Show success toast
+      const response = await postApi("api/login/", { email, password })
+
+      if (response?.data?.access_token) {
+        // ✅ Store token in localStorage
+        localStorage.setItem("token", response.data.access_token)
+
+        // ✅ Redirect to dashboard
+        router.push("/admin/dashboard")
+
         toast({
           title: "Success",
           description: "Logged in successfully",
-        });
+        })
       } else {
-        // If no token is received, show an error toast
         toast({
           title: "Error",
           description: "No token received.",
           variant: "destructive",
-        });
+        })
       }
     } catch (error) {
-      // If login fails, show error toast
       toast({
         title: "Error",
         description: "Invalid credentials. Please try again.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
-  
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
