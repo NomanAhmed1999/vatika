@@ -29,6 +29,7 @@ import "react-image-crop/dist/ReactCrop.css"
 import { postApi, postWithFile } from "@/lib/apiService"
 import { useToast } from "@/hooks/use-toast"
 import Webcam from "react-webcam"
+import html2canvas from 'html2canvas'
 
 const hairConcernColors = {
   dull_weak: "bg-black",
@@ -226,24 +227,24 @@ export default function Home() {
   const handleCropSave = async () => {
     if (tempImageUrl && imageRef.current && crop.width && crop.height) {
       try {
-        setLoading(true)
-        const canvas = document.createElement("canvas")
-        const scaleX = imageRef.current.naturalWidth / imageRef.current.width
-        const scaleY = imageRef.current.naturalHeight / imageRef.current.height
-        const ctx = canvas.getContext("2d")
-
+        setLoading(true);
+        const canvas = document.createElement("canvas");
+        const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
+        const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+        const ctx = canvas.getContext("2d");
+  
         if (!ctx) {
-          throw new Error("Failed to get canvas context")
+          throw new Error("Failed to get canvas context");
         }
-
-        const pixelRatio = window.devicePixelRatio
-
-        canvas.width = crop.width * scaleX
-        canvas.height = crop.height * scaleY
-
-        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-        ctx.imageSmoothingQuality = "high"
-
+  
+        const pixelRatio = window.devicePixelRatio;
+  
+        canvas.width = crop.width * scaleX;
+        canvas.height = crop.height * scaleY;
+  
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        ctx.imageSmoothingQuality = "high";
+  
         ctx.drawImage(
           imageRef.current,
           crop.x * scaleX,
@@ -253,76 +254,90 @@ export default function Home() {
           0,
           0,
           crop.width * scaleX,
-          crop.height * scaleY,
-        )
-
+          crop.height * scaleY
+        );
+  
         // Convert canvas to blob
         const blob = await new Promise<Blob | null>((resolve) => {
-          canvas.toBlob(
-            (blob) => resolve(blob),
-            "image/jpeg",
-            0.95
-          )
-        })
-
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95);
+        });
+  
         if (!blob) {
-          throw new Error("Failed to create image blob")
+          throw new Error("Failed to create image blob");
         }
-
+  
         // Create a new file from the blob
-        const croppedFile = new File([blob], "cropped-image.jpg", { type: "image/jpeg" })
-        
+        const croppedFile = new File([blob], "cropped-image.jpg", { type: "image/jpeg" });
+  
+        // Map the selected hair concern to its background color
+        const selectedHairConcern = formData.hairConcerns[0]; // Use the state directly
+        const colorMap: { [key: string]: string } = {
+          dull_weak: "#000000", // Black
+          dry_frizzy: "#f97316", // Orange
+          hair_fall: "#a855f7", // Purple
+        };
+        const backgroundColor = colorMap[selectedHairConcern] || "#FFFFFF"; // Default to white if undefined
+  
         // Process the cropped image
-        const formData = new FormData()
-        formData.append("image", croppedFile)
-
-        const response = await postWithFile("api/image-processing/", formData, null)
-        const data = await response.json()
-        
+        const formDataToSend = new FormData();
+        formDataToSend.append("image", croppedFile);
+        formDataToSend.append("background_color", backgroundColor);
+  
+        console.log("Sending request to API...");
+        const response = await postWithFile("api/image-processing/", formDataToSend, null);
+        console.log("API Response status:", response.status);
+  
         if (!response.ok) {
-          if (data.error && data.error.includes("Invalid number of faces")) {
-            setImageError(data.error)
-            toast({
-              title: "Image Error",
-              description: data.error,
-              variant: "destructive",
-            })
-          } else {
-            setImageError("Failed to process image. Please try again.")
-          }
-          return
+          const errorData = await response.json();
+          console.error("API Error:", errorData);
+          throw new Error(errorData.message || "Failed to process image");
         }
-        
+  
+        const data = await response.json();
+        console.log("API Response data:", data);
+  
         if (data.image_url) {
-          // Create and set preview URL
-          const croppedUrl = URL.createObjectURL(blob)
-          setPreviewUrl(croppedUrl)
-          setProcessedImageUrl(data.image_url)
-          
-          // Update form data with the processed image URL
-          setFormData(prev => ({
+          // Update form data with the processed image URL and background color
+          setFormData((prev) => ({
             ...prev,
-            image_url: data.image_url
-          }))
-
+            image_url: data.image_url,
+            background_color: data.background_color,
+          }));
+  
+          // Set the processed image URL
+          setProcessedImageUrl(data.image_url);
+          console.log("Set processed image URL:", data.image_url);
+  
+          // Create and set preview URL for the cropped image
+          const croppedUrl = URL.createObjectURL(blob);
+          setPreviewUrl(croppedUrl);
+          console.log("Set preview URL:", croppedUrl);
+  
           // Clean up temp image
           if (tempImageUrl) {
-            URL.revokeObjectURL(tempImageUrl)
-            setTempImageUrl(null)
+            URL.revokeObjectURL(tempImageUrl);
+            setTempImageUrl(null);
           }
-
-          setIsCropModalOpen(false)
-          setImageError("")
+  
+          setIsCropModalOpen(false);
+          setImageError("");
         } else {
-          throw new Error("Failed to process image")
+          console.error("API response missing image_url:", data);
+          throw new Error("Response does not contain required fields");
         }
-      } catch (error) {
-        setImageError("Failed to process image. Please try again.")
+      } catch (error: any) {
+        console.error("Error in handleCropSave:", error);
+        setImageError(error.message || "Failed to process image. Please try again.");
+        toast({
+          title: "Error",
+          description: error.message || "Failed to process image. Please try again.",
+          variant: "destructive",
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -516,92 +531,31 @@ export default function Home() {
   }
 
   // Prepare share image for modal
-  const prepareShareImage = () => {
-    if (!bottleRef.current) return
+  const prepareShareImage = async () => {
+    if (!bottleRef.current) return;
 
-    // Create a canvas element
-    const canvas = document.createElement("canvas")
-    canvas.width = 400
-    canvas.height = 600
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    try {
+      const canvas = await html2canvas(bottleRef.current, {
+        backgroundColor: null,
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      });
 
-    // Draw background
-    ctx.fillStyle = "#8CC63F"
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    // Create a new image for the bottle
-    const bottleImg = new Image()
-    bottleImg.crossOrigin = "anonymous"
-    bottleImg.src = "/images/vatika-bottle-onion.png"
-
-    bottleImg.onload = () => {
-      // Draw the bottle
-      ctx.drawImage(bottleImg, 100, 100, 200, 400)
-
-      // Draw the circular label
-      ctx.beginPath()
-      ctx.arc(200, 250, 50, 0, Math.PI * 2)
-      ctx.fillStyle = "#9C2C7F"
-      ctx.fill()
-
-      // Draw the photo if available
-      if (previewUrl) {
-        const photoImg = new Image()
-        photoImg.crossOrigin = "anonymous"
-        photoImg.src = previewUrl
-
-        photoImg.onload = () => {
-          // Create a circular clipping path for the photo
-          ctx.save()
-          ctx.beginPath()
-          ctx.arc(200, 250, 40, 0, Math.PI * 2)
-          ctx.clip()
-
-          // Draw the photo
-          ctx.drawImage(photoImg, 160, 210, 80, 80)
-          ctx.restore()
-
-          // Add text
-          finishImage()
-        }
-
-        photoImg.onerror = () => {
-          finishImage()
-        }
-      } else {
-        finishImage()
-      }
-
-      function finishImage() {
-        if (!ctx) {
-          console.error("Canvas context is null")
-          return
-        }
-
-        // Add text
-        ctx.fillStyle = "white"
-        ctx.font = "bold 10px Arial"
-        ctx.textAlign = "center"
-        ctx.fillText("Stronger Hair, Stronger Bonds", 200, 220)
-
-        // Add names
-        ctx.fillStyle = "white"
-        ctx.font = "bold 12px Arial"
-        ctx.textAlign = "center"
-        ctx.fillText(displayNames() || "Your Bestie Bottle", 200, 290)
-
-        // Add Vatika logo
-        ctx.font = "bold 16px Arial"
-        ctx.fillText("Vatika", 200, 350)
-
-        // Convert to data URL and set as share image
-        const dataUrl = canvas.toDataURL("image/png")
-        setShareImage(dataUrl)
-      }
+      const dataUrl = canvas.toDataURL("image/png");
+      setShareImage(dataUrl);
+    } catch (error) {
+      console.error("Error capturing image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to capture image. Please try again.",
+        variant: "destructive",
+      });
     }
-  }
-
+  };
+  
+  
   // Clean up object URLs on unmount
   useEffect(() => {
     return () => {
@@ -758,7 +712,7 @@ export default function Home() {
                   <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
                   <div className="relative mr-[100px] w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full bg-transparent overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center">
                     {/* Text inside the circle */}
-                    <div className="text-[#003300] text-center px-8">
+                    <div className="text-[#003300] bg-[#f8c156] w-full mt-[200px] text-center px-8">
                       <div className="text-xl font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
@@ -876,15 +830,11 @@ export default function Home() {
                         </text>
                       </svg>
                     </div>
-
-                    {/* Selected hair concern display */}
-                    {formData.hairConcerns[0] && (
-                      <div className="absolute top-[100px] left-0 right-0 text-center">
-                        <div className="text-white font-medium text-lg">
-                          {hairConcernLabels[formData.hairConcerns[0] as keyof typeof hairConcernLabels]}
-                        </div>
+                    <div className="text-[#003300] bg-[#f8c156] w-full mt-[200px] text-center px-8">
+                    <div className="text-xl font-bold">
+                        {displayNames() || "Enter Your Names"}
                       </div>
-                    )}
+                      </div>
                   </div>
                 </motion.div>
               </div>
@@ -970,7 +920,7 @@ export default function Home() {
                   <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
                     {/* Photo area */}
                     {previewUrl ? (
-                      <div className="absolute inset-[40px] rounded-full overflow-hidden">
+                      <div className="absolute h-full w-full rounded-full overflow-hidden">
                         <img
                           src={processedImageUrl || previewUrl}
                           alt="Preview"
@@ -983,11 +933,11 @@ export default function Home() {
                       </div>
                     )}
                     {/* Names at bottom */}
-                    <div className="absolute bottom-[20px] left-0 right-0 text-center">
-                      <div className="text-[#003300] font-bold text-xl">
-                        {displayNames() || "Your Bestie Bottle"}
+                    <div className="text-[#003300] relative bg-[#f8c156] w-full mt-[200px] text-center px-8">
+                    <div className="text-xl font-bold">
+                        {displayNames() || "Enter Your Names"}
                       </div>
-                    </div>
+                      </div>
                   </div>
                 </motion.div>
               </div>
@@ -1106,7 +1056,7 @@ export default function Home() {
                   <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
                     {/* Always render the uploaded image if available */}
                     {(() => { const imgSrc = processedImageUrl ?? previewUrl ?? ""; return imgSrc !== "" ? (
-                      <div className="absolute inset-[40px] rounded-full overflow-hidden z-10">
+                      <div className="absolute h-full w-full rounded-full overflow-hidden z-10">
                         <img
                           src={imgSrc}
                           alt="Custom label"
@@ -1115,11 +1065,11 @@ export default function Home() {
                       </div>
                     ) : null })()}
                     {/* Names at bottom */}
-                    <div className="absolute bottom-[20px] left-0 right-0 text-center z-20">
-                      <div className="text-[#003300] font-bold text-xl">
-                        {displayNames() || "Your Bestie Bottle"}
+                    <div className="text-[#003300] bg-[#f8c156] z-10 w-full mt-[200px] text-center px-8">
+                    <div className="text-xl font-bold">
+                        {displayNames() || "Enter Your Names"}
                       </div>
-                    </div>
+                      </div>
                   </div>
                 </motion.div>
               </div>
@@ -1210,7 +1160,6 @@ export default function Home() {
                               }`}
                               required
                             />
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
                           {formErrors.first_name && (
                             <p className="text-red-500 text-sm mt-1">{formErrors.first_name}</p>
@@ -1232,7 +1181,6 @@ export default function Home() {
                               }`}
                               required
                             />
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
                           {formErrors.last_name && (
                             <p className="text-red-500 text-sm mt-1">{formErrors.last_name}</p>
@@ -1256,7 +1204,6 @@ export default function Home() {
                               }`}
                               required
                             />
-                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
                           {formErrors.email && (
                             <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
@@ -1279,7 +1226,6 @@ export default function Home() {
                               }`}
                               required
                             />
-                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
                           {formErrors.phone_number && (
                             <p className="text-red-500 text-sm mt-1">{formErrors.phone_number}</p>
@@ -1302,7 +1248,6 @@ export default function Home() {
                               }`}
                               required
                             />
-                            <MapPin className="absolute left-3 top-3 text-[#003300]/40 h-4 w-4" />
                           </div>
                           {formErrors.address && (
                             <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>

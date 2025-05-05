@@ -108,26 +108,35 @@ export const postApiOTP = async (url: string, data: any, token?: string) => {
     }
 };
 
-export const patchApi = async (url: string, options: any, token: any) => {
-    if(!token){
-        window.location.href = '/';
-    }
+export const patchApi = async (url: string, options: any = {}, token: any = null) => {
     try {
-        return await fetch(`${apiURL}${url}`, {
-            method: 'PATCH', // Specify the method type
-            headers: token? {
-                'Content-Type': 'application/json', // Set the content type to JSON
-                'Authorization': `token ${token}`
-            }:{
-                'Content-Type': 'application/json', // Set the content type to JSON
-            },
-            body: JSON.stringify(options) // Convert options to a JSON string
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `Token ${token}`;
+        }
+
+        const response = await fetch(`${apiURL}${url}`, {
+            method: 'PATCH', // Specify the PATCH method
+            headers: headers,
+            body: JSON.stringify(options), // Convert options to a JSON string
         });
+
+        if (!response.ok) {
+            const errorData = await response.json(); // Attempt to parse the error response
+            throw new Error(errorData.detail || 'Something went wrong');
+        }
+
+        return await response.json(); // Return the parsed response
     } catch (error: any) {
-        console.error('Error retrieving data:', error);
-        throw new Error(error.message);
+        console.error('Error during API call:', error);
+        throw new Error(error.message || 'Unknown error occurred');
     }
 };
+  
+  
 
 export const putApi = async (url: string, options: any, token: any) => {
     if(!token){
