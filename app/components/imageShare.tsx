@@ -1,6 +1,27 @@
 import html2canvas from "html2canvas";
+import { useEffect, useState } from "react";
 
 const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: React.RefObject<HTMLDivElement> }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Poll for image load in the bottleRef
+  useEffect(() => {
+    if (!bottleRef.current) return;
+    const img = bottleRef.current.querySelector("img");
+    if (img && img.complete) {
+      setImageLoaded(true);
+      return;
+    }
+    let interval: any = null;
+    interval = setInterval(() => {
+      const img = bottleRef.current?.querySelector("img");
+      if (img && img.complete) {
+        setImageLoaded(true);
+        clearInterval(interval);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [bottleRef]);
 
   const handleDownload = async () => {
     if (!bottleRef.current) return;
@@ -52,17 +73,17 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
         <h2 className="text-2xl font-bold mb-4">Share Your Bestie Bottle</h2>
         <p className="mb-6 text-gray-600">Download or share the awesome photo you created!</p>
         <div className="flex flex-col gap-4">
-            <button onClick={handleDownload} className="bg-green-600 text-white py-2 rounded hover:bg-green-700">
-                Download Image
+            <button onClick={handleDownload} disabled={!imageLoaded} className={`bg-green-600 text-white py-2 rounded hover:bg-green-700 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                {imageLoaded ? 'Download Image' : 'Loading...'}
             </button>
-            <button onClick={handleShare} className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-                Share (Mobile)
+            <button onClick={handleShare} disabled={!imageLoaded} className={`bg-blue-600 text-white py-2 rounded hover:bg-blue-700 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                {imageLoaded ? 'Share (Mobile)' : 'Loading...'}
             </button>
-            <button onClick={handleWhatsAppShare} className="bg-green-500 text-white py-2 rounded hover:bg-green-600">
-                Share on WhatsApp
+            <button onClick={handleWhatsAppShare} disabled={!imageLoaded} className={`bg-green-500 text-white py-2 rounded hover:bg-green-600 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                {imageLoaded ? 'Share on WhatsApp' : 'Loading...'}
             </button>
-            <button onClick={handleFacebookShare} className="bg-blue-800 text-white py-2 rounded hover:bg-blue-900">
-                Share on Facebook
+            <button onClick={handleFacebookShare} disabled={!imageLoaded} className={`bg-blue-800 text-white py-2 rounded hover:bg-blue-900 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                {imageLoaded ? 'Share on Facebook' : 'Loading...'}
             </button>
             <button onClick={onClose} className="text-gray-600 underline mt-4">
                 Close

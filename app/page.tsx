@@ -26,22 +26,28 @@ import { Button } from "@/components/ui/button"
 import ShareModal from "./components/imageShare"
 import ReactCrop, { type Crop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
-import { Pacifico } from "next/font/google"
 import { postApi, postWithFile } from "@/lib/apiService"
 import { useToast } from "@/hooks/use-toast"
+import Webcam from "react-webcam"
 
-const pacifico = Pacifico({
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-})
+const hairConcernColors = {
+  dull_weak: "bg-black",
+  dry_frizzy: "bg-orange-500",
+  hair_fall: "bg-purple-500"
+}
+
+const hairConcernLabels = {
+  dull_weak: "Dull & Weak Hair",
+  dry_frizzy: "Dry & Frizzy Hair",
+  hair_fall: "Hair Fall"
+}
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState({
     customer_name: "",
     bestie_name: "",
-    hairConcern: "",
+    hairConcerns: [] as string[],
     image_url: "",
     first_name: "",
     last_name: "",
@@ -84,6 +90,35 @@ export default function Home() {
   })
   const imageRef = useRef<HTMLImageElement | null>(null)
 
+  const [formErrors, setFormErrors] = useState({
+    customer_name: "",
+    bestie_name: "",
+    hairConcerns: "",
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone_number: "",
+    address: "",
+  })
+
+  const [selectedHairConcerns, setSelectedHairConcerns] = useState<string[]>([])
+
+  const hairConcernOptions = [
+    { value: "dull_weak", label: "Dull & Weak Hair", color: "#FFB6C1" },
+    { value: "dry_frizzy", label: "Dry & Frizzy Hair", color: "#87CEEB" },
+    { value: "hair_fall", label: "Hair Fall", color: "#98FB98" },
+    { value: "split_ends", label: "Split Ends", color: "#DDA0DD" },
+    { value: "dandruff", label: "Dandruff", color: "#F0E68C" },
+  ]
+
+  const [isWebcamModalOpen, setIsWebcamModalOpen] = useState(false)
+  const webcamRef = useRef<any>(null)
+
+  // Helper to detect mobile
+  const isMobile = typeof window !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent)
+
+  const [imageError, setImageError] = useState("")
+
   const handleButtonClick = () => {
     // Instead of directly opening file input, show options
     setIsImageOptionsOpen(true)
@@ -97,10 +132,15 @@ export default function Home() {
   }
 
   const handleCameraClick = () => {
-    if (cameraInputRef.current) {
-      cameraInputRef.current.click()
+    if (isMobile) {
+      if (cameraInputRef.current) {
+        cameraInputRef.current.click()
+      }
+      setIsImageOptionsOpen(false)
+    } else {
+      setIsWebcamModalOpen(true)
+      setIsImageOptionsOpen(false)
     }
-    setIsImageOptionsOpen(false)
   }
 
   const nextStep = () => {
@@ -130,7 +170,7 @@ export default function Home() {
     setFormData({
       customer_name: "",
       bestie_name: "",
-      hairConcern: "",
+      hairConcerns: [],
       image_url: "",
       first_name: "",
       last_name: "",
@@ -237,11 +277,21 @@ export default function Home() {
         formData.append("image", croppedFile)
 
         const response = await postWithFile("api/image-processing/", formData, null)
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || "Failed to process image")
-        }
         const data = await response.json()
+        
+        if (!response.ok) {
+          if (data.error && data.error.includes("Invalid number of faces")) {
+            setImageError(data.error)
+            toast({
+              title: "Image Error",
+              description: data.error,
+              variant: "destructive",
+            })
+          } else {
+            setImageError("Failed to process image. Please try again.")
+          }
+          return
+        }
         
         if (data.image_url) {
           // Create and set preview URL
@@ -262,15 +312,12 @@ export default function Home() {
           }
 
           setIsCropModalOpen(false)
+          setImageError("")
         } else {
           throw new Error("Failed to process image")
         }
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to process image. Please try again.",
-          variant: "destructive",
-        })
+        setImageError("Failed to process image. Please try again.")
       } finally {
         setLoading(false)
       }
@@ -279,9 +326,39 @@ export default function Home() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    
+    // For phone number, format as user types
+    if (name === 'phone_number') {
+      let formattedValue = value.replace(/\D/g, '')
+      
+      // If user is typing and hasn't added +92, add it
+      if (formattedValue.length > 0 && !formattedValue.startsWith('92')) {
+        formattedValue = '92' + formattedValue
+      }
+      
+      // Add + if not present
+      if (formattedValue.length > 0 && !formattedValue.startsWith('+')) {
+        formattedValue = '+' + formattedValue
+      }
+      
+      // Limit to 13 characters (+92 + 10 digits)
+      if (formattedValue.length <= 13) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: formattedValue
+        }))
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    }
+    
+    // Clear error when user starts typing
+    setFormErrors(prev => ({
       ...prev,
-      [name]: value,
+      [name]: ""
     }))
   }
 
@@ -294,40 +371,143 @@ export default function Home() {
   }
 
   const handleSelectChange = (value: string) => {
-    setFormData({
-      ...formData,
-      hairConcern: value,
-    })
+    setFormData(prev => ({
+      ...prev,
+      hairConcerns: [value]
+    }))
+  }
+
+  const validateForm = () => {
+    const errors = {
+      customer_name: "",
+      bestie_name: "",
+      hairConcerns: "",
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone_number: "",
+      address: "",
+    }
+
+    // Name validations
+    if (!formData.customer_name.trim()) {
+      errors.customer_name = "Your name is required"
+    }
+    if (!formData.bestie_name.trim()) {
+      errors.bestie_name = "Bestie's name is required"
+    }
+    if (!formData.hairConcerns.length) {
+      errors.hairConcerns = "Please select a hair concern"
+    }
+
+    // Contact form validations
+    if (!formData.first_name.trim()) {
+      errors.first_name = "First name is required"
+    }
+    if (!formData.last_name.trim()) {
+      errors.last_name = "Last name is required"
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!formData.email.trim()) {
+      errors.email = "Email is required"
+    } else if (!emailRegex.test(formData.email)) {
+      errors.email = "Please enter a valid email address"
+    }
+
+    // Phone validation - must start with +92
+    const phoneRegex = /^\+92\d{10}$/
+    if (!formData.phone_number.trim()) {
+      errors.phone_number = "Phone number is required"
+    } else if (!phoneRegex.test(formData.phone_number)) {
+      errors.phone_number = "Phone number must start with +92 for Pakistan. Example: +923001234567"
+    }
+
+    if (!formData.address.trim()) {
+      errors.address = "Address is required"
+    }
+
+    setFormErrors(errors)
+    return Object.values(errors).every(error => !error)
   }
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please check the form for errors",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
+      // Format phone number to ensure it starts with +92
+      let formattedPhone = formData.phone_number.replace(/\D/g, '')
+      if (!formattedPhone.startsWith('92')) {
+        formattedPhone = '92' + formattedPhone
+      }
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+' + formattedPhone
+      }
+      
       // Create order with all form data
       const orderData = {
-        customer_name: formData.customer_name,
-        bestie_name: formData.bestie_name,
-        hair_condition: formData.hairConcern,
-        image_url: formData.image_url, // Using the processed image URL
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        phone_number: formData.phone_number,
-        address: formData.address,
+        customer_name: formData.customer_name.trim(),
+        bestie_name: formData.bestie_name.trim(),
+        hair_condition: formData.hairConcerns[0],
+        image_url: formData.image_url,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email.trim(),
+        phone_number: formattedPhone,
+        address: formData.address.trim(),
       }
 
-      const response = await postApi("api/create-order/", orderData)
+      const response = await postApi("api/create-order/", orderData, null)
       
-      if (response) {
+      if (!response.ok) {
+        const errorData = await response.json()
+        
+        // Handle specific API errors
+        if (errorData.phone_number) {
+          // Handle phone number validation errors
+          setFormErrors(prev => ({
+            ...prev,
+            phone_number: Array.isArray(errorData.phone_number) 
+              ? errorData.phone_number[0] 
+              : errorData.phone_number
+          }))
+          throw new Error("Please check the phone number format")
+        }
+        
+        if (errorData.error === "A customer with this email already exists") {
+          setFormErrors(prev => ({
+            ...prev,
+            email: "This email is already registered"
+          }))
+          throw new Error("This email is already registered")
+        }
+
+        // Handle other API errors
+        throw new Error(errorData.detail || "Failed to create order")
+      }
+
+      const data = await response.json()
+      if (data) {
         setFormSubmitted(true)
         prepareShareImage()
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Order creation error:", error)
       toast({
         title: "Error",
-        description: "Failed to create order. Please try again.",
+        description: error.message || "Failed to create order. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -401,18 +581,18 @@ export default function Home() {
 
         // Add text
         ctx.fillStyle = "white"
-        ctx.font = `bold 10px ${pacifico.className}, Arial`
+        ctx.font = "bold 10px Arial"
         ctx.textAlign = "center"
         ctx.fillText("Stronger Hair, Stronger Bonds", 200, 220)
 
         // Add names
         ctx.fillStyle = "white"
-        ctx.font = `bold 12px ${pacifico.className}, Arial`
+        ctx.font = "bold 12px Arial"
         ctx.textAlign = "center"
         ctx.fillText(displayNames() || "Your Bestie Bottle", 200, 290)
 
         // Add Vatika logo
-        ctx.font = `bold 16px ${pacifico.className}, Arial`
+        ctx.font = "bold 16px Arial"
         ctx.fillText("Vatika", 200, 350)
 
         // Convert to data URL and set as share image
@@ -453,6 +633,25 @@ export default function Home() {
     initial: { scale: 1 },
     hover: { scale: 1.05 },
     tap: { scale: 0.95 },
+  }
+
+  // Handle webcam capture
+  const handleWebcamCapture = () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot()
+      if (imageSrc) {
+        // Convert base64 to blob and create object URL
+        fetch(imageSrc)
+          .then(res => res.blob())
+          .then(blob => {
+            const objectUrl = URL.createObjectURL(blob)
+            setTempImageUrl(objectUrl)
+            setFile(new File([blob], "webcam-photo.jpg", { type: "image/jpeg" }))
+            setIsCropModalOpen(true)
+            setIsWebcamModalOpen(false)
+          })
+      }
+    }
   }
 
   return (
@@ -507,7 +706,7 @@ export default function Home() {
                   className="text-3xl md:text-4xl lg:text-5xl text-white font-light leading-tight"
                 >
                   Create your <br />
-                  <span className={`font-bold ${pacifico.className}`}>Vatika Bestie Bottle</span> <br />
+                  <span className="font-bold">Vatika Bestie Bottle</span> <br />
                   in <span className="font-bold">5</span> easy steps!
                 </motion.h1>
 
@@ -557,10 +756,10 @@ export default function Home() {
                   className="relative flex justify-center items-center"
                 >
                   <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
-                  <div className="relative mr-[100px] w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full bg-[#9C2C7F] overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center">
+                  <div className="relative mr-[100px] w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full bg-transparent overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center">
                     {/* Text inside the circle */}
-                    <div className="text-white text-center px-8">
-                      <div className={`text-xl font-bold ${pacifico.className}`}>
+                    <div className="text-[#003300] text-center px-8">
+                      <div className="text-xl font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
                     </div>
@@ -575,27 +774,41 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className={`text-3xl md:text-4xl font-bold text-white mb-2 ${pacifico.className}`}>Step 1</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 1</h2>
                   <p className="text-lg md:text-xl text-white mb-6">Enter Your Name & Your Bestie's Name</p>
 
                   <div className="space-y-4">
-                    <Input
-                      type="text"
-                      name="customer_name"
-                      value={formData.customer_name}
-                      onChange={handleInputChange}
-                      placeholder="Your Name"
-                      className="bg-white/80 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm"
-                    />
+                    <div>
+                      <Input
+                        type="text"
+                        name="customer_name"
+                        value={formData.customer_name}
+                        onChange={handleInputChange}
+                        placeholder="Your Name"
+                        className={`bg-white/80 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm ${
+                          formErrors.customer_name ? "ring-2 ring-red-500" : ""
+                        }`}
+                      />
+                      {formErrors.customer_name && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.customer_name}</p>
+                      )}
+                    </div>
 
-                    <Input
-                      type="text"
-                      name="bestie_name"
-                      value={formData.bestie_name}
-                      onChange={handleInputChange}
-                      placeholder="Your Bestie's Name"
-                      className="bg-white/80 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm"
-                    />
+                    <div>
+                      <Input
+                        type="text"
+                        name="bestie_name"
+                        value={formData.bestie_name}
+                        onChange={handleInputChange}
+                        placeholder="Your Bestie's Name"
+                        className={`bg-white/80 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm ${
+                          formErrors.bestie_name ? "ring-2 ring-red-500" : ""
+                        }`}
+                      />
+                      {formErrors.bestie_name && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.bestie_name}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex justify-center md:justify-end gap-3 mt-6 md:mt-10">
@@ -639,29 +852,39 @@ export default function Home() {
               </div>
 
               {/* Left side - Circular frame with enhanced effects */}
-              <div className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]">
+              <div
+                className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]"
+                ref={bottleRef}
+              >
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5 }}
-                  className="relative"
+                  className="relative flex justify-center items-center"
                 >
-                  <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
-                  <img
-                    src="/images/frame.png"
-                    alt="Frame"
-                    className="w-[250px] h-[250px] md:w-[300px] md:h-[300px] relative z-10 "
-                  />
-
-                  {/* Text overlay */}
-                  <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center z-20">
-                    <div className="text-white text-center px-8 pt-8">
-                      <div
-                        className={`absolute bottom-[70px] left-0 right-0 text-center text-white text-xl font-bold ${pacifico.className}`}
-                      >
-                        {displayNames() || "Your Bestie Bottle"}
-                      </div>
+                  <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${
+                    formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"
+                  }`}>
+                    {/* Curved text at top */}
+                    <div className="absolute top-0 left-0 right-0 z-10">
+                      <svg viewBox="0 0 320 320" className="w-full h-full">
+                        <path id="curve" d="M 0, 50 A 50, 50, 0, 0, 1, 320, 50" fill="transparent" />
+                        <text className="text-white font-bold text-lg">
+                          <textPath xlinkHref="#curve" startOffset="50%" textAnchor="middle">
+                            {displayNames() || "Your Bestie Bottle"}
+                          </textPath>
+                        </text>
+                      </svg>
                     </div>
+
+                    {/* Selected hair concern display */}
+                    {formData.hairConcerns[0] && (
+                      <div className="absolute top-[100px] left-0 right-0 text-center">
+                        <div className="text-white font-medium text-lg">
+                          {hairConcernLabels[formData.hairConcerns[0] as keyof typeof hairConcernLabels]}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               </div>
@@ -673,11 +896,11 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className={`text-3xl md:text-4xl font-bold text-white mb-2 ${pacifico.className}`}>Step 2</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 2</h2>
                   <p className="text-lg md:text-xl text-white mb-6">Choose Your Bestie's Hair Concern</p>
 
-                  <div className="">
-                    <Select onValueChange={handleSelectChange} value={formData.hairConcern}>
+                  <div className="space-y-4">
+                    <Select onValueChange={handleSelectChange} value={formData.hairConcerns[0] || ""}>
                       <SelectTrigger className="bg-white/80 border-none text-[#003300] h-12 rounded-lg mb-2 focus:ring-1 focus:ring-[#003300] transition-all shadow-sm">
                         <SelectValue placeholder="Select a hair concern" />
                       </SelectTrigger>
@@ -687,6 +910,9 @@ export default function Home() {
                         <SelectItem value="hair_fall">Hair Fall</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formErrors.hairConcerns && (
+                      <p className="text-red-500 text-sm">{formErrors.hairConcerns}</p>
+                    )}
                   </div>
 
                   <div className="flex justify-center md:justify-end gap-3 mt-6 md:mt-10">
@@ -738,40 +964,27 @@ export default function Home() {
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5 }}
-                  className="relative"
+                  className="relative flex justify-center items-center"
                 >
-                  <div className="relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full bg-[#9C2C7F] overflow-hidden border-8 border-[#f8c156] shadow-xl">
-                    {/* Curved text at top */}
-                    <div className="absolute top-0 left-0 right-0 z-10">
-                      <svg viewBox="0 0 320 320" className="w-full h-full">
-                        <path id="curve" d="M 0, 50 A 50, 50, 0, 0, 1, 320, 50" fill="transparent" />
-                        <text className="text-white font-bold text-lg">
-                          <textPath xlinkHref="#curve" startOffset="50%" textAnchor="middle">
-                            Stronger Hair, Stronger Bonds
-                          </textPath>
-                        </text>
-                      </svg>
-                    </div>
-
-                    {/* Photo area - only show if there's an uploaded image */}
+                  <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
+                  <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
+                    {/* Photo area */}
                     {previewUrl ? (
-                      <div className="absolute top-[50px] left-[30px] right-[30px] bottom-[50px] overflow-hidden rounded-full">
+                      <div className="absolute inset-[40px] rounded-full overflow-hidden">
                         <img
                           src={processedImageUrl || previewUrl}
                           alt="Preview"
-                          className="w-full h-full"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     ) : (
-                      // Empty space when no image is uploaded
-                      <div className="absolute top-[50px] left-[30px] right-[30px] bottom-[50px] rounded-full bg-[#9C2C7F] flex items-center justify-center">
+                      <div className="absolute inset-[40px] rounded-full bg-transparent flex items-center justify-center">
                         <Camera size={50} className="text-white/50" />
                       </div>
                     )}
-
                     {/* Names at bottom */}
                     <div className="absolute bottom-[20px] left-0 right-0 text-center">
-                      <div className={`text-white font-bold text-xl ${pacifico.className}`}>
+                      <div className="text-[#003300] font-bold text-xl">
                         {displayNames() || "Your Bestie Bottle"}
                       </div>
                     </div>
@@ -786,7 +999,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className={`text-3xl md:text-4xl font-bold text-white mb-2 ${pacifico.className}`}>Step 3</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 3</h2>
                   <p className="text-lg md:text-xl text-white mb-6">Upload a Fun Pic Together</p>
 
                   {/* Camera icon in a white box with upload arrow */}
@@ -830,6 +1043,12 @@ export default function Home() {
                       className="hidden"
                     />
                   </div>
+
+                  {imageError && (
+                    <div className="text-red-600 text-center mt-2 font-semibold">
+                      {imageError}
+                    </div>
+                  )}
 
                   {/* Navigation buttons */}
                   <div className="flex justify-center md:justify-end gap-3 mt-6 md:mt-10">
@@ -884,21 +1103,20 @@ export default function Home() {
                   className="relative flex justify-center items-center"
                 >
                   <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
-                  <div className="relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full bg-[#9C2C7F] overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center">
-                    {/* Photo */}
-                    {previewUrl && (
-                      <div className="absolute inset-[40px] rounded-full overflow-hidden">
+                  <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
+                    {/* Always render the uploaded image if available */}
+                    {(() => { const imgSrc = processedImageUrl ?? previewUrl ?? ""; return imgSrc !== "" ? (
+                      <div className="absolute inset-[40px] rounded-full overflow-hidden z-10">
                         <img
-                          src={processedImageUrl || previewUrl}
+                          src={imgSrc}
                           alt="Custom label"
-                          className="w-full h-full"
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                    )}
-
+                    ) : null })()}
                     {/* Names at bottom */}
-                    <div className="absolute bottom-[20px] left-0 right-0 text-center">
-                      <div className={`text-white font-bold text-xl ${pacifico.className}`}>
+                    <div className="absolute bottom-[20px] left-0 right-0 text-center z-20">
+                      <div className="text-[#003300] font-bold text-xl">
                         {displayNames() || "Your Bestie Bottle"}
                       </div>
                     </div>
@@ -913,7 +1131,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className={`text-3xl md:text-4xl font-bold text-white mb-2 ${pacifico.className}`}>Step 4</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 4</h2>
                   <p className="text-lg md:text-xl text-white mb-6">
                     {formSubmitted ? "Your Bestie Bottle is Ready!" : "Complete Your Details"}
                   </p>
@@ -986,12 +1204,17 @@ export default function Home() {
                               name="first_name"
                               value={formData.first_name}
                               onChange={handleInputChange}
-                              placeholder="Your first name"
-                              className="pl-10 bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors"
+                              placeholder="First Name"
+                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
+                                formErrors.first_name ? "ring-2 ring-red-500" : ""
+                              }`}
                               required
                             />
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
+                          {formErrors.first_name && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.first_name}</p>
+                          )}
                         </div>
                         <div>
                           <label htmlFor="last_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
@@ -1003,12 +1226,17 @@ export default function Home() {
                               name="last_name"
                               value={formData.last_name}
                               onChange={handleInputChange}
-                              placeholder="Your last name"
-                              className="pl-10 bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors"
+                              placeholder="Last Name"
+                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
+                                formErrors.last_name ? "ring-2 ring-red-500" : ""
+                              }`}
                               required
                             />
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
+                          {formErrors.last_name && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.last_name}</p>
+                          )}
                         </div>
 
                         <div>
@@ -1022,12 +1250,17 @@ export default function Home() {
                               type="email"
                               value={formData.email}
                               onChange={handleInputChange}
-                              placeholder="your.email@example.com"
-                              className="pl-10 bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors"
+                              placeholder="Email Address"
+                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
+                                formErrors.email ? "ring-2 ring-red-500" : ""
+                              }`}
                               required
                             />
                             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
+                          {formErrors.email && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                          )}
                         </div>
 
                         <div>
@@ -1040,12 +1273,17 @@ export default function Home() {
                               name="phone_number"
                               value={formData.phone_number}
                               onChange={handleInputChange}
-                              placeholder="Your phone number"
-                              className="pl-10 bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors"
+                              placeholder="Phone Number"
+                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
+                                formErrors.phone_number ? "ring-2 ring-red-500" : ""
+                              }`}
                               required
                             />
                             <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#003300]/40 h-4 w-4" />
                           </div>
+                          {formErrors.phone_number && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.phone_number}</p>
+                          )}
                         </div>
 
                         <div>
@@ -1058,12 +1296,17 @@ export default function Home() {
                               name="address"
                               value={formData.address}
                               onChange={handleInputChange}
-                              placeholder="Your delivery address"
-                              className="pl-10 bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors min-h-[100px] resize-none"
+                              placeholder="Address"
+                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
+                                formErrors.address ? "ring-2 ring-red-500" : ""
+                              }`}
                               required
                             />
                             <MapPin className="absolute left-3 top-3 text-[#003300]/40 h-4 w-4" />
                           </div>
+                          {formErrors.address && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>
+                          )}
                         </div>
 
                         <Button
@@ -1121,7 +1364,7 @@ export default function Home() {
       <Dialog open={isImageOptionsOpen} onOpenChange={setIsImageOptionsOpen}>
         <DialogContent className="bg-white rounded-xl p-6 max-w-md">
           <DialogHeader>
-            <DialogTitle className={`text-[#003300] text-xl text-center ${pacifico.className}`}>
+            <DialogTitle className="text-xl text-center">
               Choose an Option
             </DialogTitle>
           </DialogHeader>
@@ -1154,7 +1397,7 @@ export default function Home() {
       <Dialog open={isCropModalOpen} onOpenChange={setIsCropModalOpen}>
         <DialogContent className="bg-white rounded-xl p-6 max-w-3xl">
           <DialogHeader>
-            <DialogTitle className={`text-[#003300] text-xl text-center ${pacifico.className}`}>
+            <DialogTitle className="text-xl text-center">
               Crop Your Image
             </DialogTitle>
           </DialogHeader>
@@ -1207,6 +1450,28 @@ export default function Home() {
 
       {/* Share Modal */}
       {isShareModalOpen && <ShareModal onClose={() => setIsShareModalOpen(false)} bottleRef={bottleRef} />}
+
+      {/* Webcam Modal */}
+      <Dialog open={isWebcamModalOpen} onOpenChange={setIsWebcamModalOpen}>
+        <DialogContent className="bg-white rounded-xl p-6 max-w-3xl flex flex-col items-center">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-center">Take a Picture</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 mt-4">
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              className="rounded-lg border border-[#8CC63F]"
+              videoConstraints={{ facingMode: "user" }}
+            />
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => setIsWebcamModalOpen(false)} variant="outline" className="border-[#003300] text-[#003300]">Cancel</Button>
+              <Button onClick={handleWebcamCapture} className="bg-[#8CC63F] hover:bg-[#6AAD1D] text-white">Capture</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
