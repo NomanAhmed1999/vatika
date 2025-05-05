@@ -39,29 +39,25 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (isHydrated && userData?.access_token) {
+    if (isHydrated) {
+
+      if (!userData?.access_token) {
+        router.push("/admin/login");
+        toast({
+          title: "Authentication Required",
+          description: "Please login to access the dashboard",
+          duration: 3000,
+        });
+        return;
+      }
       fetchCustomer();
-    } else if (isHydrated && !userData?.access_token) {
-      router.push("/admin/login");
-      toast({
-        title: "Authentication Required",
-        description: "Please login to access the dashboard",
-        duration: 3000,
-      });
+
+      
     }
   }, [isHydrated, userData]);
 
   const fetchCustomer = async () => {
     try {
-      if (!userData?.access_token) {
-        router.push("/admin/login");
-        toast({
-          title: "Error!",
-          description: "Authentication token is missing. Please login again.",
-          duration: 3000,
-        });
-        return;
-      }
       const res = await getApi("api/customer", userData.access_token);
       if (!res.ok) {
         if (res.status === 401) {

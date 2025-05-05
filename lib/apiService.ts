@@ -11,7 +11,7 @@ export const getApi = async (url: string, token: any = null) => {
         try {
             return (fetch(`${apiURL}${url}`, {
                 headers: {
-                    authorization: `token ${token}`
+                    authorization: `Token ${token}`
                 }
             }))
         } catch (error: any) {
