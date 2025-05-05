@@ -145,17 +145,64 @@ export default function Home() {
   }
 
   const nextStep = () => {
+    // Validate current step before proceeding
+    let canProceed = true;
+    let errorMessage = "";
+
+    switch (currentStep) {
+      case 0:
+        // No validation needed for first step
+        break;
+      case 1:
+        // Validate names
+        if (!formData.customer_name.trim()) {
+          canProceed = false;
+          errorMessage = "Please enter your name";
+          setFormErrors(prev => ({ ...prev, customer_name: "Your name is required" }));
+        }
+        if (!formData.bestie_name.trim()) {
+          canProceed = false;
+          errorMessage = "Please enter your bestie's name";
+          setFormErrors(prev => ({ ...prev, bestie_name: "Bestie's name is required" }));
+        }
+        break;
+      case 2:
+        // Validate hair concern
+        if (!formData.hairConcerns.length) {
+          canProceed = false;
+          errorMessage = "Please select a hair concern";
+          setFormErrors(prev => ({ ...prev, hairConcerns: "Please select a hair concern" }));
+        }
+        break;
+      case 3:
+        // Validate image
+        if (!previewUrl && !processedImageUrl) {
+          canProceed = false;
+          errorMessage = "Please upload a photo";
+          setImageError("Please upload a photo to continue");
+        }
+        break;
+    }
+
+    if (!canProceed) {
+      toast({
+        title: "Validation Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (currentStep < 4) {
-      // Updated to account for new step 4
-      setCurrentStep(currentStep + 1)
-      window.scrollTo(0, 0)
+      setCurrentStep(currentStep + 1);
+      window.scrollTo(0, 0);
 
       // If we're moving to the last step, mark as complete
       if (currentStep === 3) {
-        setIsComplete(true)
+        setIsComplete(true);
       }
     } else {
-      resetForm()
+      resetForm();
     }
   }
 
