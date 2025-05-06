@@ -23,13 +23,37 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
     return () => clearInterval(interval);
   }, [bottleRef]);
 
+  // const handleDownload = async () => {
+  //   if (!bottleRef.current) return;
+  //   const canvas = await html2canvas(bottleRef.current);
+  //   const link = document.createElement('a');
+  //   link.download = 'bestie-bottle.png';
+  //   link.href = canvas.toDataURL();
+  //   link.click();
+  // };
+
+
   const handleDownload = async () => {
-    if (!bottleRef.current) return;
-    const canvas = await html2canvas(bottleRef.current);
-    const link = document.createElement('a');
-    link.download = 'bestie-bottle.png';
-    link.href = canvas.toDataURL();
-    link.click();
+    if (bottleRef.current) {
+      setImageLoaded(false);
+      let bestiesName = bottleRef.current.querySelector('#besties-name');
+      console.log(bestiesName);
+      
+      bestiesName?.classList.add('pb-4');
+      const canvas = await html2canvas(bottleRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+      });
+
+      bestiesName?.classList.remove('pb-4');
+      setImageLoaded(true);
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'besties.png';
+      link.click();
+    }
   };
   
   const handleFacebookShare = () => {

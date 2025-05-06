@@ -618,16 +618,29 @@ export default function Home() {
     }
   }, [previewUrl, shareImage, tempImageUrl])
 
+  // const displayNames = () => {
+  //   if (formData.customer_name && formData.bestie_name) {
+  //     return `${formData.customer_name} & ${formData.bestie_name}`
+  //   } else if (formData.customer_name) {
+  //     return `${formData.customer_name} & Bestie`
+  //   } else if (formData.customer_name) {
+  //     return `You & ${formData.bestie_name}`
+  //   }
+  //   return ""
+  // }
+
   const displayNames = () => {
-    if (formData.customer_name && formData.bestie_name) {
-      return `${formData.customer_name} & ${formData.bestie_name}`
-    } else if (formData.customer_name) {
-      return `${formData.customer_name} & Bestie`
-    } else if (formData.customer_name) {
-      return `You & ${formData.bestie_name}`
+    const { customer_name, bestie_name } = formData;
+  
+    if (customer_name && bestie_name) {
+      return `${customer_name} & ${bestie_name}`;
+    } else if (customer_name) {
+      return `${customer_name} & Bestie`;
+    } else if (bestie_name) {
+      return `You & ${bestie_name}`;
     }
-    return ""
-  }
+    return "Enter Your Names";
+  };
 
   // Button animation variants
   const buttonVariants = {
@@ -855,7 +868,6 @@ export default function Home() {
               {/* Left side - Circular frame with enhanced effects */}
               <div
                 className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]"
-                ref={bottleRef}
               >
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
@@ -955,7 +967,6 @@ export default function Home() {
               {/* Left side - Circular frame with photo */}
               <div
                 className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]"
-                ref={bottleRef}
               >
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
@@ -1103,19 +1114,20 @@ export default function Home() {
                   <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
                     {/* Always render the uploaded image if available */}
                     {(() => { const imgSrc = processedImageUrl ?? previewUrl ?? ""; return imgSrc !== "" ? (
-                      <div className="absolute h-full w-full rounded-full overflow-hidden z-10">
+                      <div className="absolute h-full w-full rounded-full overflow-hidden">
                         <img
-                          src={imgSrc}
+                          src={`/api/?url=${encodeURIComponent(imgSrc)}`}
+                          // src={imgSrc}
+                          // src={'images/hero-img.png'}
+                          id="bottle-image"
                           alt="Custom label"
                           className="w-full h-full object-cover"
                         />
                       </div>
                     ) : null })()}
                     {/* Names at bottom */}
-                    <div className="text-[#003300] bg-[#f8c156] z-10 w-full mt-[200px] text-center px-8">
-                    <div className="text-xl font-bold">
-                        {displayNames() || "Enter Your Names"}
-                      </div>
+                    <div id="besties-name" className="absolute top-56 h-8 flex justify-center items-center text-[#003300] bg-[#f8c156] z-10 w-full text-center text-xl font-bold">
+                        <p>{displayNames() || "Enter Your Names"}</p>
                       </div>
                   </div>
                 </motion.div>
