@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Menu, X, Instagram, Facebook, Youtube } from "lucide-react"
 
 const Header = () => {
@@ -24,10 +25,16 @@ const Header = () => {
   }, [])
 
   return (
-<header className="w-full" style={{ background: "linear-gradient(100deg, #76b900 15%, #8dd100 85%)" }}>
-   <div className="container mx-auto px-4 py-2 flex items-center justify-between">
+    <header className="w-full" style={{ background: "linear-gradient(100deg, #76b900 15%, #8dd100 85%)" }}>
+      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
         <Link href="/" className="flex items-center">
-          <img src="/images/vatika-logo.png" alt="Vatika" className="h-16" />
+          <Image
+            src="/images/vatika-logo.png"
+            alt="Vatika Logo"
+            width={120}
+            height={40}
+            className="h-10 w-auto"
+          />
         </Link>
 
         <div className="hidden md:flex items-center space-x-4">
@@ -43,7 +50,6 @@ const Header = () => {
               <Youtube size={20} />
             </Link>
           </div>
-
 
           {/* Navigation */}
           <nav className="flex space-x-6">
@@ -73,15 +79,15 @@ const Header = () => {
         <div ref={menuRef} className="md:hidden bg-[#8dd100] shadow-lg absolute top-16 left-0 right-0 z-20">
           <div className="flex justify-center py-3">
             <div className="flex space-x-6">
-            <Link href="https://www.instagram.com" target="_blank" className="text-white hover:text-gray-200">
-              <Instagram size={20} />
-            </Link>
-            <Link href="https://www.facebook.com" target="_blank" className="text-white hover:text-gray-200">
-              <Facebook size={20} />
-            </Link>
-            <Link href="https://www.youtube.com" target="_blank" className="text-white hover:text-gray-200">
-              <Youtube size={20} />
-            </Link>
+              <Link href="https://www.instagram.com" target="_blank" className="text-white hover:text-gray-200">
+                <Instagram size={20} />
+              </Link>
+              <Link href="https://www.facebook.com" target="_blank" className="text-white hover:text-gray-200">
+                <Facebook size={20} />
+              </Link>
+              <Link href="https://www.youtube.com" target="_blank" className="text-white hover:text-gray-200">
+                <Youtube size={20} />
+              </Link>
             </div>
           </div>
           <nav className="flex flex-col items-center space-y-4 p-4">

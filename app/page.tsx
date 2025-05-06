@@ -251,6 +251,8 @@ export default function Home() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
+      // Clear previous errors when a new image is selected
+      setImageError("");
       // Create a temporary URL for the selected file
       const objectUrl = URL.createObjectURL(selectedFile)
       setTempImageUrl(objectUrl)
@@ -275,6 +277,7 @@ export default function Home() {
     if (tempImageUrl && imageRef.current && crop.width && crop.height) {
       try {
         setLoading(true);
+        setImageError(""); // Clear any previous errors
         const canvas = document.createElement("canvas");
         const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
         const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
@@ -317,50 +320,63 @@ export default function Home() {
         const croppedFile = new File([blob], "cropped-image.jpg", { type: "image/jpeg" });
   
         // Map the selected hair concern to its background color
-        const selectedHairConcern = formData.hairConcerns[0]; // Use the state directly
+        const selectedHairConcern = formData.hairConcerns[0];
         const colorMap: { [key: string]: string } = {
-          dull_weak: "#000000", // Black
-          dry_frizzy: "#f97316", // Orange
-          hair_fall: "#a855f7", // Purple
+          dull_weak: "#000000",
+          dry_frizzy: "#f97316",
+          hair_fall: "#a855f7",
         };
-        const backgroundColor = colorMap[selectedHairConcern] || "#FFFFFF"; // Default to white if undefined
+        const backgroundColor = colorMap[selectedHairConcern] || "#FFFFFF";
   
         // Process the cropped image
         const formDataToSend = new FormData();
         formDataToSend.append("image", croppedFile);
         formDataToSend.append("background_color", backgroundColor);
   
-        console.log("Sending request to API...");
         const response = await postWithFile("api/image-processing/", formDataToSend, null);
-        console.log("API Response status:", response.status);
   
         if (!response.ok) {
           const errorData = await response.json();
           console.error("API Error:", errorData);
-          throw new Error(errorData.message || "Failed to process image");
+          
+          // Handle different types of API errors
+          let errorMessage = "Failed to process image";
+          
+          if (errorData.detail) {
+            errorMessage = errorData.detail;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else if (Array.isArray(errorData)) {
+            errorMessage = errorData.join(", ");
+          }
+          
+          setImageError(errorMessage);
+          toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          return;
         }
   
         const data = await response.json();
-        console.log("API Response data:", data);
   
         if (data.image_url) {
-          // Update form data with the processed image URL and background color
           setFormData((prev) => ({
             ...prev,
             image_url: data.image_url,
             background_color: data.background_color,
           }));
   
-          // Set the processed image URL
           setProcessedImageUrl(data.image_url);
-          console.log("Set processed image URL:", data.image_url);
   
-          // Create and set preview URL for the cropped image
           const croppedUrl = URL.createObjectURL(blob);
           setPreviewUrl(croppedUrl);
-          console.log("Set preview URL:", croppedUrl);
   
-          // Clean up temp image
           if (tempImageUrl) {
             URL.revokeObjectURL(tempImageUrl);
             setTempImageUrl(null);
@@ -369,15 +385,15 @@ export default function Home() {
           setIsCropModalOpen(false);
           setImageError("");
         } else {
-          console.error("API response missing image_url:", data);
           throw new Error("Response does not contain required fields");
         }
       } catch (error: any) {
         console.error("Error in handleCropSave:", error);
-        setImageError(error.message || "Failed to process image. Please try again.");
+        const errorMessage = error.message || "Failed to process image. Please try again.";
+        setImageError(errorMessage);
         toast({
           title: "Error",
-          description: error.message || "Failed to process image. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       } finally {
@@ -654,6 +670,8 @@ export default function Home() {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot()
       if (imageSrc) {
+        // Clear previous errors when a new image is captured
+        setImageError("");
         // Convert base64 to blob and create object URL
         fetch(imageSrc)
           .then(res => res.blob())
@@ -717,7 +735,7 @@ export default function Home() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="text-3xl md:text-4xl lg:text-5xl text-white font-light leading-tight"
+                  className="text-3xl md:text-4xl lg:text-5xl text-white font-light leading-tight font-dancing"
                 >
                   Create your <br />
                   <span className="font-bold">Vatika Bestie Bottle</span> <br />
@@ -1051,12 +1069,6 @@ export default function Home() {
                       className="hidden"
                     />
                   </div>
-
-                  {imageError && (
-                    <div className="text-red-600 text-center mt-2 font-semibold">
-                      {imageError}
-                    </div>
-                  )}
 
                   {/* Navigation buttons */}
                   <div className="flex justify-center md:justify-end gap-3 mt-6 md:mt-10">
@@ -1413,6 +1425,11 @@ export default function Home() {
                   <RefreshCw size={50} className="text-[#003300]" />
                 </div>
                 <p className="mt-4 text-[#003300]">Processing image...</p>
+                {imageError && (
+                  <div className="text-red-600 text-center mt-4 font-semibold">
+                    {imageError}
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -1432,7 +1449,11 @@ export default function Home() {
                     />
                   </ReactCrop>
                 )}
-
+                {imageError && (
+                  <div className="text-red-600 text-center mt-4 font-semibold">
+                    {imageError}
+                  </div>
+                )}
                 <div className="flex justify-between w-full mt-6">
                   <Button onClick={handleCropCancel} variant="outline" className="border-[#003300] text-[#003300]">
                     Cancel

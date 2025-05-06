@@ -11,11 +11,8 @@ const config: Config = {
   theme: {
   	extend: {
 		fontFamily: {
-			pacifico: ['Pacifico', 'cursive'],
-
-			
-		  },
-		  
+			dancing: ['Dancing Script', 'cursive'],
+		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

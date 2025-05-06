@@ -347,6 +347,7 @@ export default function Dashboard() {
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#003300] uppercase tracking-wider">Phone</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#003300] uppercase tracking-wider">Address</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#003300] uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-[#003300] uppercase tracking-wider">Image</th>
                     <th className="px-6 py-3 text-left text-xs font-bold text-[#003300] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -372,6 +373,15 @@ export default function Dashboard() {
                         `}>
                           {customer.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {customer.image_url && (
+                          <img
+                            src={customer.image_url}
+                            alt={`${customer.customer_name}'s image`}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {customer.status === "pending" && (
