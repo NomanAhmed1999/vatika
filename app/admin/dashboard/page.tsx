@@ -6,7 +6,7 @@ import { Store } from "../../store/store";
 import { useToast } from "@/hooks/use-toast"
 import { getApi, patchApi } from "@/lib/apiService";
 import { Pacifico } from "next/font/google"
-import { LogOut, User, Mail, BarChart2, Clock, CheckCircle, XCircle } from "lucide-react"
+import { LogOut, User, Mail, BarChart2, Clock, CheckCircle, XCircle, Download } from "lucide-react"
 
 interface Customer {
   id: number
@@ -235,6 +235,58 @@ export default function Dashboard() {
     setPage(1);
   }, [statusFilter]);
 
+  const handleExportCSV = async () => {
+    if (!userData?.access_token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to perform this action.",
+        duration: 3000,
+      });
+      router.push("/admin/login");
+      return;
+    }
+
+    try {
+      const response = await getApi("api/export-customers-csv/", userData.access_token);
+      
+      if (!response.ok) {
+        throw new Error('Failed to export CSV');
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `customers-export-${new Date().toISOString().split('T')[0]}.csv`;
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success!",
+        description: "CSV file has been downloaded successfully",
+        duration: 3000,
+      });
+    } catch (error: any) {
+      console.error("Error exporting CSV:", error);
+      toast({
+        title: "Error!",
+        description: error.message || "Failed to export CSV. Please try again.",
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F9FB] flex flex-col">
       {/* Header */}
@@ -244,31 +296,40 @@ export default function Dashboard() {
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-[#003300] tracking-tight">Vatika Admin</h1>
             </div>
-            <div className="relative">
+            <div className="flex items-center space-x-4">
               <button
-                className="flex items-center space-x-3 focus:outline-none group"
-                onClick={() => setProfileDropdown((v) => !v)}
+                onClick={handleExportCSV}
+                className="flex items-center px-4 py-2 text-sm font-medium text-white bg-[#8CC63F] rounded-md hover:bg-[#6AAD1D] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8CC63F]"
               >
-                <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-[#2563eb] text-white font-bold text-lg shadow-md">
-                  {getInitials(adminProfile.name)}
-                </span>
-                <span className="text-[#003300] font-semibold text-base group-hover:underline">{adminProfile.name}</span>
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
               </button>
-              {profileDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 border border-[#E5E7EB] animate-fade-in">
-                  <div className="px-4 py-2 flex items-center space-x-2 border-b border-[#F3F4F6]">
-                    <Mail className="h-4 w-4 text-[#8CC63F]" />
-                    <span className="text-xs text-gray-700">{adminProfile.email}</span>
+              <div className="relative">
+                <button
+                  className="flex items-center space-x-3 focus:outline-none group"
+                  onClick={() => setProfileDropdown((v) => !v)}
+                >
+                  <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-[#8cc63f] text-white font-bold text-lg shadow-md">
+                    {getInitials(adminProfile.name)}
+                  </span>
+                  <span className="text-[#003300] font-semibold text-base group-hover:underline">{adminProfile.name}</span>
+                </button>
+                {profileDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 border border-[#E5E7EB] animate-fade-in">
+                    <div className="px-4 py-2 flex items-center space-x-2 border-b border-[#F3F4F6]">
+                      <Mail className="h-4 w-4 text-[#8CC63F]" />
+                      <span className="text-xs text-gray-700">{adminProfile.email}</span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-black hover:bg-[#F3F4F6] flex items-center space-x-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Logout</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-black hover:bg-[#F3F4F6] flex items-center space-x-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

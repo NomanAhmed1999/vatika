@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Send, MapPin, Phone, Mail, Clock, Instagram, Facebook, Twitter, Youtube, CheckCircle2 } from "lucide-react"
+import { postApi } from "@/lib/apiService"
 
 export default function ContactPage() {
   const [formState, setFormState] = useState({
@@ -29,26 +30,33 @@ export default function ContactPage() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      const response = await postApi('api/contact/', formState)
+      if (response.ok) {
+        setIsSubmitted(true)
+        // Reset form after showing success message
+        setTimeout(() => {
+          setIsSubmitted(false)
+          setFormState({
+            name: "",
+            email: "",
+            subject: "",
+            message: "",
+          })
+        }, 3000)
+      } else {
+        throw new Error('Failed to send message')
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      // You might want to show an error message to the user here
+    } finally {
       setIsSubmitting(false)
-      setIsSubmitted(true)
-
-      // Reset form after showing success message
-      setTimeout(() => {
-        setIsSubmitted(false)
-        setFormState({
-          name: "",
-          email: "",
-          subject: "",
-          message: "",
-        })
-      }, 3000)
-    }, 1500)
+    }
   }
 
   // Animation variants
