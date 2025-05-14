@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react"
 import { motion, useInView, useAnimation, type Variants } from "framer-motion"
-import Header from "../components/Header"
 import { ChevronDown } from "lucide-react"
+import Header from "../components/Header"
 
 export default function AboutPage() {
   const storyRef = useRef<HTMLDivElement>(null)

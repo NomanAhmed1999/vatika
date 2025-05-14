@@ -13,8 +13,41 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  font-family: 'Poppins', Arial, sans-serif;
+  font-family: 'Saphire', sans-serif;
 
   /* background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb)); */
 }
 
+
+@font-face {
+  font-family: 'Saphire';
+  src: url('/fonts/Saphire.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Trial';
+  src: url('/fonts/EffraVF_Trial_WghtItal.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Overthink';
+  src: url('/fonts/Overthink.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.saphire {
+  font-family: 'Saphire', sans-serif;
+}
+
+.overthink {
+  font-family: 'Overthink', sans-serif;
+}
+
+.trial {
+  font-family: 'Trial', sans-serif;
+}

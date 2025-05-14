@@ -92,3 +92,57 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+
+/* Small devices (phones, 0px and up) */
+@media (max-width: 764px) {
+  body {
+    font-size: 15px;
+  }
+  .step0-frame {
+    margin-top: 210px !important;
+  }
+  .step1-frame {
+    margin-top: 250px !important;
+  }
+  .step2-frame {
+    margin-top: 180px !important;
+  }
+  .step3-frame {
+    margin-top: 300px !important;
+  }
+  .step5-frame {
+    margin-top: 400px !important;
+  }
+  .step4-frame {
+    margin-top: 360px !important;
+  }
+  .center {
+    margin-left: 150px !important;
+  }
+  /* Apni custom classes ya elements yahan add karein */
+}
+
+/* Medium devices (tablets, 641px and up) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
+  .step4-frame {
+    margin-bottom: 130px !important;
+  }
+  .responsive-padding {
+    padding: 16px !important;
+  }
+  /* Apni custom classes ya elements yahan add karein */
+}
+
+/* Large devices (desktops, 1025px and up) */
+@media (min-width: 1025px) {
+  body {
+    font-size: 18px;
+  }
+  .responsive-padding {
+    padding: 24px !important;
+  }
+}

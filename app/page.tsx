@@ -15,6 +15,9 @@ import {
   Phone,
   User,
   MapPin,
+  Instagram,
+  Facebook,
+  Youtube,
 } from "lucide-react"
 import Header from "./components/Header"
 import { Input } from "@/components/ui/input"
@@ -30,11 +33,13 @@ import { postApi, postWithFile } from "@/lib/apiService"
 import { useToast } from "@/hooks/use-toast"
 import Webcam from "react-webcam"
 import html2canvas from 'html2canvas'
+import Link from "next/link"
+import Image from "next/image"
 
 const hairConcernColors = {
-  dull_weak: "bg-black",
+  dull_weak: "bg-fuchsia-800",
   dry_frizzy: "bg-orange-500",
-  hair_fall: "bg-purple-500"
+  hair_fall: "bg-fuchsia-800"
 }
 
 const hairConcernLabels = {
@@ -42,6 +47,83 @@ const hairConcernLabels = {
   dry_frizzy: "Dry & Frizzy Hair",
   hair_fall: "Hair Fall"
 }
+
+// Responsive CustomHeader component
+const CustomHeader = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  return (
+    <div className="fixed top-0 left-0 w-full z-30">
+      <div className="relative w-full h-[100px] md:h-[120px] flex items-center justify-between px-6 md:px-16">
+        {/* Logo and oil drop */}
+        <div className="flex items-center space-x-2">
+          <Image 
+            src="/images/logoo.png" 
+            alt="Vatika Logo" 
+            width={200} 
+            height={200} 
+            className="mt-36 drop-shadow-xl"
+            priority
+          />
+        </div>
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center space-x-0 ml-8">
+          {/* Social Icons */}
+          <div className="flex space-x-3 mr-6">
+            <Link href="https://www.instagram.com" target="_blank" className="text-[#094543] hover:text-gray-200">
+              <Instagram size={20} />
+            </Link>
+            <Link href="https://www.facebook.com" target="_blank" className="text-[#094543] hover:text-gray-200">
+              <Facebook size={20} />
+            </Link>
+            <Link href="https://www.youtube.com" target="_blank" className="text-[#094543] hover:text-gray-200">
+              <Youtube size={20} />
+            </Link>
+          </div>
+          <span className="h-6 border-r border-white mx-3"></span>
+          {/* Nav Links */}
+          <a href="/" className="text-[#094543] font-semibold text-sm tracking-wide hover:text-[#003300] transition px-4 border-r border-white">HOME</a>
+          <a href="/about" className="text-[#094543] font-semibold text-sm tracking-wide hover:text-[#003300] transition px-4 border-r border-white">ABOUT</a>
+          <a href="/videos" className="text-[#094543] font-semibold text-sm tracking-wide hover:text-[#003300] transition px-4 border-r border-white">VIDEOS</a>
+          <a href="/contact" className="text-[#094543] font-semibold text-sm tracking-wide hover:text-[#003300] transition px-4">CONTACT</a>
+        </nav>
+        {/* Mobile Nav */}
+        <div className="flex md:hidden items-center">
+          {/* Social Icons */}
+          <div className="flex space-x-3 mr-6">
+            <Link href="https://www.instagram.com" target="_blank" className="text-[#094543] hover:text-gray-200">
+              <Instagram size={20} />
+            </Link>
+            <Link href="https://www.facebook.com" target="_blank" className="text-[#094543] hover:text-gray-200">
+              <Facebook size={20} />
+            </Link>
+            <Link href="https://www.youtube.com" target="_blank" className="text-[#094543] hover:text-gray-200">
+              <Youtube size={20} />
+            </Link>
+          </div>
+          <button
+            className="ml-4 focus:outline-none"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Open menu"
+          >
+            <svg className="w-8 h-8 text-[#094543]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" />
+            </svg>
+          </button>
+        </div>
+        {/* Mobile Dropdown */}
+        {mobileMenuOpen && (
+          <div className="absolute top-full w-full right-0 w-48 bg-[#8cc63f] shadow-lg rounded-b-xl flex flex-col items-start py-4 px-6 md:hidden animate-fade-in z-50">
+            <a href="/" className="text-white font-semibold py-2 w-full hover:text-[#003300] transition">HOME</a>
+            <a href="/about" className="text-white font-semibold py-2 w-full hover:text-[#003300] transition">ABOUT</a>
+            <a href="/videos" className="text-white font-semibold py-2 w-full hover:text-[#003300] transition">VIDEOS</a>
+            <a href="/contact" className="text-white font-semibold py-2 w-full hover:text-[#003300] transition">CONTACT</a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(0)
@@ -182,6 +264,13 @@ export default function Home() {
           setImageError("Please upload a photo to continue");
         }
         break;
+      case 5:
+        // Validate form fields for step 5
+        if (!validateForm()) {
+          canProceed = false;
+          errorMessage = "Please check the form for errors";
+        }
+        break;
     }
 
     if (!canProceed) {
@@ -193,11 +282,9 @@ export default function Home() {
       return;
     }
 
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
-
-      // If we're moving to the last step, mark as complete
       if (currentStep === 3) {
         setIsComplete(true);
       }
@@ -322,7 +409,7 @@ export default function Home() {
         // Map the selected hair concern to its background color
         const selectedHairConcern = formData.hairConcerns[0];
         const colorMap: { [key: string]: string } = {
-          dull_weak: "#000000",
+          dull_weak: "#86198f",
           dry_frizzy: "#f97316",
           hair_fall: "#a855f7",
         };
@@ -634,17 +721,6 @@ export default function Home() {
     }
   }, [previewUrl, shareImage, tempImageUrl])
 
-  // const displayNames = () => {
-  //   if (formData.customer_name && formData.bestie_name) {
-  //     return `${formData.customer_name} & ${formData.bestie_name}`
-  //   } else if (formData.customer_name) {
-  //     return `${formData.customer_name} & Bestie`
-  //   } else if (formData.customer_name) {
-  //     return `You & ${formData.bestie_name}`
-  //   }
-  //   return ""
-  // }
-
   const displayNames = () => {
     const { customer_name, bestie_name } = formData;
   
@@ -687,9 +763,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#8CC63F]">
-      <Header />
-
+    <div className="min-h-screen bg-[#8CC63F] relative">
+      {/* Custom header on every page, above background image */}
+      <CustomHeader />
       <AnimatePresence mode="wait">
         <motion.div
           key={currentStep}
@@ -700,21 +776,21 @@ export default function Home() {
           className="w-full"
         >
           {currentStep === 0 ? (
-            <div className="w-full min-h-[90vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
+            <div className="w-full min-h-[100vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
               {/* Background image with overlay */}
               <div className="absolute inset-0 z-0 opacity-90">
                 <div
                   className="absolute inset-0 bg-cover bg-center hidden md:block"
-                  style={{ backgroundImage: "url('/images/banner-img.png')" }}
+                  style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
                 />
                 <div
                   className="absolute inset-0 bg-cover bg-center block md:hidden"
-                  style={{ backgroundImage: "url('/images/mobile-banner.png')" }}
+                  style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
                 />
               </div>
 
               {/* Left side - Product display with enhanced animations */}
-              <div className="w-full md:w-1/2 relative z-10 flex justify-center mb-8 md:mb-[120px] md:ml-[50px]">
+              <div className="w-full md:w-1/2 relative z-10 flex justify-center md:ml-[50px]  md:mt-0">
                 <motion.img
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -725,72 +801,86 @@ export default function Home() {
                   }}
                   src="/images/hero-img.png"
                   alt="Vatika Bottles"
-                  className="h-auto max-h-[250px] md:max-h-[350px] lg:max-h-[450px] w-auto object-contain"
+                  className="h-auto max-h-[250px] md:max-h-[350px] lg:max-h-[450px] w-auto object-contain step0-frame md:mt-0 lg:mt-0"
                 />
               </div>
 
               {/* Right side - Text content with enhanced typography */}
-              <div className="w-full md:w-1/2 relative z-10 text-center mb-8 md:mb-[130px] px-4 md:text-left">
+              <div className="w-full md:w-1/2 relative z-10 text-center px-4 md:text-left mt-12">
                 <motion.h1
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                   className="text-3xl md:text-4xl lg:text-5xl text-white font-light leading-tight font-dancing"
+                  style={{ fontFamily: 'Saphire, Arial, sans-serif' }}
                 >
                   Create your <br />
-                  <span className="font-bold">Vatika Bestie Bottle</span> <br />
-                  in <span className="font-bold">5</span> easy steps!
+                  Vatika Bestie Bottle<br />
+                  in <span style={{ fontFamily: ' Arial, sans-serif', color: '#094543' }}>5</span><span style={{ color: '#094543' }}> easy steps!</span>
                 </motion.h1>
 
                 <motion.p
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
-                  className="font-light text-white mt-4 md:mt-6 w-full md:w-3/4 text-base md:text-lg"
+                  className="font-light trial text-white mt-4 md:mt-6 w-full md:w-3/4 text-base md:text-lg"
                 >
                   Tag your bestie and create a one-of-a-kind Vatika shampoo bottle featuring both your names and photos!
                   With AI-powered customization, you and your buddy can solve your hair care worries – together.
                 </motion.p>
 
-                <motion.button
-                  onClick={nextStep}
-                  className="bg-[#6AAD1D] text-white px-6 md:px-8 py-3 md:py-4 mt-6 rounded-full font-medium text-lg hover:bg-[#5A9618] transition-colors flex items-center shadow-lg mx-auto md:mx-0"
-                  variants={buttonVariants}
-                  initial="initial"
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  Get Started
-                  <ArrowRight size={20} className="ml-2 animate-pulse" />
-                </motion.button>
+                {/* Navigation buttons */}
+                <div className="flex justify-center md:justify-end gap-3 mt-6 md:mt-10">
+                  <motion.button
+                    onClick={prevStep}
+                    className="bg-white/90 text-[#003300] rounded-full w-12 h-12 flex items-center justify-center hover:bg-white transition-colors shadow-md"
+                    variants={buttonVariants}
+                    initial="initial"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <ArrowLeft size={24} />
+                  </motion.button>
+
+                  <motion.button
+                    onClick={nextStep}
+                    className="bg-[#003300] text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-[#002200] transition-colors shadow-md"
+                    variants={buttonVariants}
+                    initial="initial"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <ArrowRight size={24} />
+                  </motion.button>
+                </div>
               </div>
             </div>
           ) : currentStep === 1 ? (
-            <div className="w-full min-h-[90vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
+            <div className="w-full min-h-[100vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
               {/* Background image with overlay */}
               <div className="absolute inset-0 z-0 opacity-90">
                 <div
                   className="absolute inset-0 bg-cover bg-center hidden md:block"
-                  style={{ backgroundImage: "url('/images/banner-img.png')" }}
+                  style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
                 />
                 <div
                   className="absolute inset-0 bg-cover bg-center block md:hidden"
-                  style={{ backgroundImage: "url('/images/mobile-banner.png')" }}
+                  style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
                 />
               </div>
 
               {/* Left side - Circular frame with enhanced effects */}
-              <div className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]">
+              <div className="w-full md:w-1/2 relative z-10 flex justify-center items-center">
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5 }}
                   className="relative flex justify-center items-center"
                 >
-                  <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
-                  <div className="relative mr-[100px] w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full bg-transparent overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-[#fcde57] blur-md opacity-30 scale-110"></div>
+                  <div className="relative step1-frame w-[250px] h-[250px] md:w-[300px] md:h-[300px] mt-32 rounded-full bg-transparent overflow-hidden border-8 border-[#fcde57] shadow-xl flex items-center justify-center">
                     {/* Text inside the circle */}
-                    <div className="text-[#003300] bg-[#f8c156] w-full mt-[200px] text-center px-8">
+                    <div className="text-[#003300] bg-[#fcde57] w-full mt-[200px] text-center px-8">
                       <div className="text-xl font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
@@ -800,14 +890,14 @@ export default function Home() {
               </div>
 
               {/* Right side - Step content with enhanced inputs */}
-              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4">
+              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4 mt-32">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 1</h2>
-                  <p className="text-lg md:text-xl text-white mb-6">Enter Your Name & Your Bestie's Name</p>
+<h2 className="text-3xl md:text-4xl font-bold overthink text-[#094543]">Step <span style={{ fontFamily: ' Arial, sans-serif', color: '#094543' }}>1</span></h2>
+                <p className="text-lg md:text-xl text-white mb-6">Enter Your Name & Your Bestie's Name</p>
 
                   <div className="space-y-4">
                     <div>
@@ -817,7 +907,7 @@ export default function Home() {
                         value={formData.customer_name}
                         onChange={handleInputChange}
                         placeholder="Your Name"
-                        className={`bg-white/80 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm ${
+                        className={`bg-[#ceee8d] h-16 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm ${
                           formErrors.customer_name ? "ring-2 ring-red-500" : ""
                         }`}
                       />
@@ -833,7 +923,7 @@ export default function Home() {
                         value={formData.bestie_name}
                         onChange={handleInputChange}
                         placeholder="Your Bestie's Name"
-                        className={`bg-white/80 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm ${
+                        className={`bg-[#ceee8d] h-16 border-none text-[#003300] placeholder:text-[#003300]/50 px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#003300] transition-all shadow-sm ${
                           formErrors.bestie_name ? "ring-2 ring-red-500" : ""
                         }`}
                       />
@@ -870,22 +960,22 @@ export default function Home() {
               </div>
             </div>
           ) : currentStep === 2 ? (
-            <div className="w-full min-h-[90vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
+            <div className="w-full min-h-[100vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
               {/* Background image with overlay */}
               <div className="absolute inset-0 z-0 opacity-90">
                 <div
                   className="absolute inset-0 bg-cover bg-center hidden md:block"
-                  style={{ backgroundImage: "url('/images/banner-img.png')" }}
+                  style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
                 />
                 <div
                   className="absolute inset-0 bg-cover bg-center block md:hidden"
-                  style={{ backgroundImage: "url('/images/mobile-banner.png')" }}
+                  style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
                 />
               </div>
 
               {/* Left side - Circular frame with enhanced effects */}
               <div
-                className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]"
+                className="w-full md:w-1/2 relative z-10 flex justify-center items-center "
               >
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
@@ -893,9 +983,7 @@ export default function Home() {
                   transition={{ duration: 0.5 }}
                   className="relative flex justify-center items-center"
                 >
-                  <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${
-                    formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"
-                  }`}>
+                  <div className={`relative w-[250px] step2-frame mt-24 h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#fcde57] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
                     {/* Curved text at top */}
                     <div className="absolute top-0 left-0 right-0 z-10">
                       <svg viewBox="0 0 320 320" className="w-full h-full">
@@ -907,7 +995,7 @@ export default function Home() {
                         </text>
                       </svg>
                     </div>
-                    <div className="text-[#003300] bg-[#f8c156] w-full mt-[200px] text-center px-8">
+                    <div className="text-[#003300] bg-[#fcde57] w-full mt-[200px] text-center px-8">
                     <div className="text-xl font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
@@ -917,21 +1005,21 @@ export default function Home() {
               </div>
 
               {/* Right side - Step content with enhanced select */}
-              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4">
+              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4 mt-32">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 2</h2>
+<h2 className="text-3xl md:text-4xl font-bold  overthink text-[#094543]">Step <span style={{ fontFamily: ' Arial, sans-serif', color: '#094543' }}>2</span></h2>
                   <p className="text-lg md:text-xl text-white mb-6">Choose Your Bestie's Hair Concern</p>
 
                   <div className="space-y-4">
                     <Select onValueChange={handleSelectChange} value={formData.hairConcerns[0] || ""}>
-                      <SelectTrigger className="bg-white/80 border-none text-[#003300] h-12 rounded-lg mb-2 focus:ring-1 focus:ring-[#003300] transition-all shadow-sm">
+                      <SelectTrigger className="bg-[#ceee8d] h-16 border-none text-[#003300] rounded-lg mb-2 focus:ring-1 focus:ring-[#003300] transition-all shadow-sm">
                         <SelectValue placeholder="Select a hair concern" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border-none text-[#003300] rounded-lg">
+                      <SelectContent className="bg-[#ceee8d] border-none text-[#003300] rounded-lg">
                         <SelectItem value="dull_weak">Dull & Weak Hair</SelectItem>
                         <SelectItem value="dry_frizzy">Dry & Frizzy Hair</SelectItem>
                         <SelectItem value="hair_fall">Hair Fall</SelectItem>
@@ -969,22 +1057,22 @@ export default function Home() {
               </div>
             </div>
           ) : currentStep === 3 ? (
-            <div className="w-full min-h-[90vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
+            <div className="w-full min-h-[100vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
               {/* Background image with overlay */}
               <div className="absolute inset-0 z-0 opacity-90">
                 <div
                   className="absolute inset-0 bg-cover bg-center hidden md:block"
-                  style={{ backgroundImage: "url('/images/banner-img.png')" }}
+                  style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
                 />
                 <div
                   className="absolute inset-0 bg-cover bg-center block md:hidden"
-                  style={{ backgroundImage: "url('/images/mobile-banner.png')" }}
+                  style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
                 />
               </div>
 
               {/* Left side - Circular frame with photo */}
               <div
-                className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]"
+                className="w-full md:w-1/2 relative z-10 flex justify-center items-center"
               >
                 <motion.div
                   initial={{ scale: 0.9, opacity: 0 }}
@@ -993,14 +1081,14 @@ export default function Home() {
                   className="relative flex justify-center items-center"
                 >
                   <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
-                  <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
+                  <div className={`relative w-[250px] step3-frame mt-32 h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#fcde57] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
                     {/* Photo area */}
                     {previewUrl ? (
                       <div className="absolute h-full w-full rounded-full overflow-hidden">
                         <img
                           src={processedImageUrl || previewUrl}
                           alt="Preview"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full"
                         />
                       </div>
                     ) : (
@@ -1009,7 +1097,7 @@ export default function Home() {
                       </div>
                     )}
                     {/* Names at bottom */}
-                    <div className="text-[#003300] relative bg-[#f8c156] w-full mt-[200px] text-center px-8">
+                    <div className="text-[#003300] relative bg-[#fcde57] w-full mt-[200px] text-center px-8">
                     <div className="text-xl font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
@@ -1019,34 +1107,34 @@ export default function Home() {
               </div>
 
               {/* Right side - Step content */}
-              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4">
+              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4 mt-32 ">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 3</h2>
-                  <p className="text-lg md:text-xl text-white mb-6">Upload a Fun Pic Together</p>
+                   <h2 className="text-3xl md:text-4xl font-bold overthink text-[#094543] center">Step <span style={{ fontFamily: ' Arial, sans-serif', color: '#094543' }}>3</span></h2>
+                  
+                  <p className="text-lg md:text-xl text-white mb-6 center">Upload a Fun Pic Together</p>
 
                   {/* Camera icon in a white box with upload arrow */}
                   <div className="relative mb-8 w-full flex">
                     <motion.button
                       onClick={handleButtonClick}
-                      className="p-6 relative overflow-hidden transition-colors"
+                      className="relative overflow-hidden transition-colors"
                       variants={buttonVariants}
                       initial="initial"
                       whileHover="hover"
                       whileTap="tap"
                     >
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center center">
                         {loading ? (
                           <div className="animate-spin">
                             <RefreshCw size={50} className="text-[#003300]" />
                           </div>
                         ) : (
                           <>
-                            <Camera size={80} className="text-[#003300]" />
-                            <p className="mt-2 text-[#003300] font-medium">Add Photo</p>
+                        <img src="/images/cameraIcon.png" alt="" />  
                           </>
                         )}
                       </div>
@@ -1098,61 +1186,233 @@ export default function Home() {
               </div>
             </div>
           ) : currentStep === 4 ? (
-            <div className="w-full min-h-[90vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
+            <div className="w-full min-h-[100vh] flex flex-col items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
+            {/* Background image with overlay */}
+            <div className="absolute inset-0 z-0 opacity-90">
+              <div
+                className="absolute inset-0 bg-cover bg-center hidden md:block"
+                style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
+              />
+              <div
+                className="absolute inset-0 bg-cover bg-center block md:hidden"
+                style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
+              />
+            </div>
+      
+            {/* Main content: bottle, text, label */}
+            <div className="w-full flex flex-col step4-frame md:flex-row items-center justify-center z-10 mt-12 md:mt-24 gap-6 md:gap-0">
+              {/* Left: Bottle with frame overlay */}
+              <div className="flex flex-col items-center justify-center relative h-[350px] md:h-[420px] w-[180px] md:w-[220px]">
+                {/* Frame overlay at top of bottle */}
+                {((typeof processedImageUrl !== "undefined" && processedImageUrl) ||
+                  (typeof previewUrl !== "undefined" && previewUrl)) && (
+                  <div className="absolute left-1/2 -translate-x-1/2 z-20 top-0 w-[160px] md:w-[200px]">
+                    <div className="relative w-full h-auto mt-[60px] md:mt-[80px] flex flex-col items-center">
+                      <div className="w-[90px] h-[90px] md:w-[110px] md:h-[110px] rounded-full overflow-hidden border-2 border-[#fcde57] bg-white mx-auto shadow-lg relative">
+                        <img
+                          src={
+                            (typeof processedImageUrl !== "undefined" && processedImageUrl) ||
+                            (typeof previewUrl !== "undefined" && previewUrl) ||
+                            ""
+                          }
+                          alt="Besties"
+                          className="w-full h-full"
+                        />
+                        {/* Display names inside the circle at the bottom */}
+                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[10px] md:text-xs shadow truncate text-center">
+                          {typeof displayNames !== "undefined" && displayNames()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Bottle image */}
+                {typeof formData !== "undefined" && formData.hairConcerns[0] === "dull_weak" && (
+                  <img
+                    src="/images/black-bottle.png"
+                    alt="Black Bottle"
+                    className="h-[320px] md:h-[400px] w-auto object-contain relative z-10"
+                  />
+                )}
+                {typeof formData !== "undefined" && formData.hairConcerns[0] === "dry_frizzy" && (
+                  <img
+                    src="/images/orange-bottle.png"
+                    alt="Orange Bottle"
+                    className="h-[320px] md:h-[400px] w-auto object-contain relative z-10"
+                  />
+                )}
+                {typeof formData !== "undefined" && formData.hairConcerns[0] === "hair_fall" && (
+                  <img
+                    src="/images/purple-bottle.png"
+                    alt="Purple Bottle"
+                    className="h-[320px] md:h-[400px] w-auto object-contain relative z-10"
+                  />
+                )}
+              </div>
+      
+              {/* Center: Step text */}
+              <div className="flex flex-col items-center justify-center px-4 md:px-8 text-center mb-6 md:mb-0">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold overthink text-[#094543]">
+                  Step <span style={{ fontFamily: "Arial, sans-serif", color: "#094543" }}>4</span>
+                </h2>
+                <p className="text-base md:text-lg lg:text-2xl text-[#003300] mb-1 md:mb-2 overthink font-medium">
+                  Get a Custom Vatika Bottle Label
+                </p>
+                <p className="text-lg md:text-xl lg:text-2xl text-[#003300] overthink font-bold">Just for You Two!</p>
+              </div>
+      
+              {/* Right: Label image with frame overlay */}
+              <div className="flex flex-col items-center border rounded-lg border-[#daf2a9] justify-center relative h-[350px] md:h-[420px] w-[180px] md:w-[220px]">
+                {/* Frame overlay at top of label */}
+                {((typeof processedImageUrl !== "undefined" && processedImageUrl) ||
+                  (typeof previewUrl !== "undefined" && previewUrl)) && (
+                  <div className="absolute left-1/2 -translate-x-1/2 z-20 top-0 w-[160px] md:w-[200px]">
+                    <div className="relative w-full h-auto mt-[30px] md:mt-[40px] flex flex-col items-center">
+                      <div className="w-[90px] h-[90px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden border-2 border-[#fcde57] bg-white mx-auto shadow-lg relative">
+                        <img
+                          src={
+                            (typeof processedImageUrl !== "undefined" && processedImageUrl) ||
+                            (typeof previewUrl !== "undefined" && previewUrl) ||
+                            ""
+                          }
+                          alt="Besties"
+                          className="w-full h-full"
+                        />
+                        {/* Display names inside the circle at the bottom */}
+                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[10px] md:text-xs shadow truncate text-center">
+                          {typeof displayNames !== "undefined" && displayNames()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {/* Label image */}
+                {typeof formData !== "undefined" && formData.hairConcerns[0] === "dull_weak" && (
+                  <img
+                    src="/images/black-label.png"
+                    alt="Black Label"
+                    className="h-[320px] md:h-[400px] w-auto object-contain"
+                  />
+                )}
+                {typeof formData !== "undefined" && formData.hairConcerns[0] === "dry_frizzy" && (
+                  <img
+                    src="/images/orange-label.png"
+                    alt="Orange Label"
+                    className="h-[320px] md:h-[400px] w-auto object-contain"
+                  />
+                )}
+                {typeof formData !== "undefined" && formData.hairConcerns[0] === "hair_fall" && (
+                  <img
+                    src="/images/purple-label.png"
+                    alt="Purple Label"
+                    className="h-[320px] md:h-[400px] w-auto object-contain"
+                  />
+                )}
+              </div>
+            </div>
+            {/* Navigation buttons for step 4 - fixed bottom right */}
+            <div className="fixed bottom-6 right-6 z-50 flex gap-3">
+              <motion.button
+                onClick={prevStep}
+                className="bg-white/90 text-[#003300] rounded-full w-12 h-12 flex items-center justify-center hover:bg-white transition-colors shadow-md"
+                variants={buttonVariants}
+                initial="initial"
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <ArrowLeft size={24} />
+              </motion.button>
+              <motion.button
+                onClick={nextStep}
+                className="bg-[#003300] text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-[#002200] transition-colors shadow-md"
+                variants={buttonVariants}
+                initial="initial"
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <ArrowRight size={24} />
+              </motion.button>
+            </div>
+          </div>
+          ) : currentStep === 5 ? (
+            <div className="w-full min-h-[100vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
               {/* Background image with overlay */}
               <div className="absolute inset-0 z-0 opacity-90">
                 <div
                   className="absolute inset-0 bg-cover bg-center hidden md:block"
-                  style={{ backgroundImage: "url('/images/banner-img.png')" }}
+                  style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
                 />
                 <div
                   className="absolute inset-0 bg-cover bg-center block md:hidden"
-                  style={{ backgroundImage: "url('/images/mobile-banner.png')" }}
+                  style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
                 />
               </div>
 
-              {/* Left side - Bottle with custom label */}
-              <div
-                className="w-full md:w-1/2 relative z-10 flex justify-center items-center mb-8 md:mb-0 md:mr-[100px]"
-                ref={bottleRef}
-              >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="relative flex justify-center items-center"
-                >
-                  <div className="absolute inset-0 rounded-full bg-[#f8c156] blur-md opacity-30 scale-110"></div>
-                  <div className={`relative w-[250px] h-[250px] md:w-[300px] md:h-[300px] rounded-full overflow-hidden border-8 border-[#f8c156] shadow-xl flex items-center justify-center ${formData.hairConcerns[0] ? hairConcernColors[formData.hairConcerns[0] as keyof typeof hairConcernColors] : "bg-transparent"}`}>
-                    {/* Always render the uploaded image if available */}
-                    {(() => { const imgSrc = processedImageUrl ?? previewUrl ?? ""; return imgSrc !== "" ? (
-                      <div className="absolute h-full w-full rounded-full overflow-hidden">
-                        <img
-                          src={`/api/?url=${encodeURIComponent(imgSrc)}`}
-                          // src={imgSrc}
-                          // src={'images/hero-img.png'}
-                          id="bottle-image"
-                          alt="Custom label"
-                          className="w-full h-full object-cover"
-                        />
+              {/* Main content row: left image/box, right bottles */}
+              <div className="w-full flex flex-row items-center justify-center ml-[130px] z-10 mt-24">
+                {/* Left side - Box or image */}
+                <div className="hidden md:flex flex-col items-center justify-center">
+                  <img src="/images/box.png" alt="Box" className="h-[420px] w-auto mb-10" />
+                </div>
+                {/* Right side - Two bottles with frame overlay */}
+                <div className="flex justify-center items-center">
+                  <div className="relative flex flex-row items-end step5-frame gap-[-40px]" style={{ minWidth: '420px', height: '420px' }}>
+                    {[0, 1].map((i) => (
+                      <div key={i} className={i === 0 ? "-mr-32 z-10" : "z-20"} style={{ position: 'relative', width: '220px', height: '420px' }}>
+                        {/* Frame overlay at top of bottle */}
+                        {(processedImageUrl || previewUrl) && (
+                          <div className="absolute left-1/3 mt-20 -translate-x-1/2 mb-[140px] z-20" style={{ width: '200px', height: '120px' }}>
+                            <div className="relative w-[200px] h-[120px] flex flex-col items-center">
+                              <div className="w-[110px] h-[110px] rounded-full overflow-hidden border-2 border-[#fcde57] bg-white mx-auto shadow-lg relative">
+                                <img
+                                  src={processedImageUrl || previewUrl || ''}
+                                  alt="Besties"
+                                  className="w-full h-full"
+                                />
+                                {/* Display names inside the circle at the bottom */}
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-4 w-full text-[#003300] font-bold text-xs shadow">
+                                {displayNames()}
                       </div>
-                    ) : null })()}
-                    {/* Names at bottom */}
-                    <div id="besties-name" className="absolute top-56 h-8 flex justify-center items-center text-[#003300] bg-[#f8c156] z-10 w-full text-center text-xl font-bold">
-                        <p>{displayNames() || "Enter Your Names"}</p>
-                      </div>
+                    </div>
                   </div>
-                </motion.div>
+                          </div>
+                        )}
+                        {/* Bottle image */}
+                        {formData.hairConcerns[0] === "dull_weak" && (
+                          <img 
+                            src="/images/black-bottle.png" 
+                            alt="Black Bottle" 
+                            className="h-[400px] w-auto object-contain relative z-10"
+                          />
+                        )}
+                        {formData.hairConcerns[0] === "dry_frizzy" && (
+                          <img 
+                            src="/images/orange-bottle.png" 
+                            alt="Orange Bottle" 
+                            className="h-[400px] w-auto object-contain relative z-10"
+                          />
+                        )}
+                        {formData.hairConcerns[0] === "hair_fall" && (
+                          <img 
+                            src="/images/purple-bottle.png" 
+                            alt="Purple Bottle" 
+                            className="h-[400px] w-auto object-contain relative z-10"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Right side - Contact form or success message */}
-              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4">
+              <div className="w-full md:w-1/2 max-w-full md:max-w-md relative z-10 px-4 mt-32">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Step 4</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold overthink text-[#094543]">Step <span style={{ fontFamily: ' Arial, sans-serif', color: '#094543' }}>5</span></h2>
                   <p className="text-lg md:text-xl text-white mb-6">
                     {formSubmitted ? "Your Bestie Bottle is Ready!" : "Complete Your Details"}
                   </p>
@@ -1185,7 +1445,7 @@ export default function Home() {
                         Share Your Bestie Bottle
                       </motion.button>
 
-                      <div className="bg-white rounded-lg p-4 mb-4 border border-[#E5E8DF]">
+                      <div className="bg-white rounded-lg p-4 border border-[#E5E8DF]">
                         <h4 className="text-[#003300] font-medium text-base mb-2 text-left">Submission Details</h4>
                         <div className="text-[#003300]/80 text-sm text-left">
                           <div className="flex justify-between py-2 border-b border-[#E5E8DF]">
@@ -1213,96 +1473,92 @@ export default function Home() {
                     </div>
                   ) : (
                     // Contact form
-                    <form onSubmit={handleSubmitForm} className="bg-white/95 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+                    <form onSubmit={handleSubmitForm} className="backdrop-blur-sm rounded-lg p-6 shadow-sm">
                       <div className="space-y-5">
-                        <div>
-                          <label htmlFor="first_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
-                            First Name
-                          </label>
-                          <div className="relative">
-                            <Input
-                              id="first_name"
-                              name="first_name"
-                              value={formData.first_name}
-                              onChange={handleInputChange}
-                              placeholder="First Name"
-                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
-                                formErrors.first_name ? "ring-2 ring-red-500" : ""
-                              }`}
-                              required
-                            />
+                        {/* First Name & Last Name */}
+                        <div className="flex flex-col md:flex-row gap-4">
+                          <div className="w-full md:w-1/2">
+                            <label htmlFor="first_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                              First Name
+                            </label>
+                            <div className="relative">
+                              <Input
+                                id="first_name"
+                                name="first_name"
+                                value={formData.first_name}
+                                onChange={handleInputChange}
+                                placeholder="First Name"
+                                className={`bg-[#ceee8d] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${formErrors.first_name ? "ring-2 ring-red-500" : ""}`}
+                                required
+                              />
+                            </div>
+                            {formErrors.first_name && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.first_name}</p>
+                            )}
                           </div>
-                          {formErrors.first_name && (
-                            <p className="text-red-500 text-sm mt-1">{formErrors.first_name}</p>
-                          )}
-                        </div>
-                        <div>
-                          <label htmlFor="last_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
-                            Last Name
-                          </label>
-                          <div className="relative">
-                            <Input
-                              id="last_name"
-                              name="last_name"
-                              value={formData.last_name}
-                              onChange={handleInputChange}
-                              placeholder="Last Name"
-                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
-                                formErrors.last_name ? "ring-2 ring-red-500" : ""
-                              }`}
-                              required
-                            />
+                          <div className="w-full md:w-1/2">
+                            <label htmlFor="last_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                              Last Name
+                            </label>
+                            <div className="relative">
+                              <Input
+                                id="last_name"
+                                name="last_name"
+                                value={formData.last_name}
+                                onChange={handleInputChange}
+                                placeholder="Last Name"
+                                className={`bg-[#ceee8d] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${formErrors.last_name ? "ring-2 ring-red-500" : ""}`}
+                                required
+                              />
+                            </div>
+                            {formErrors.last_name && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.last_name}</p>
+                            )}
                           </div>
-                          {formErrors.last_name && (
-                            <p className="text-red-500 text-sm mt-1">{formErrors.last_name}</p>
-                          )}
                         </div>
-
-                        <div>
-                          <label htmlFor="email" className="text-sm font-medium text-[#003300]/70 mb-1 block">
-                            Email Address
-                          </label>
-                          <div className="relative">
-                            <Input
-                              id="email"
-                              name="email"
-                              type="email"
-                              value={formData.email}
-                              onChange={handleInputChange}
-                              placeholder="Email Address"
-                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
-                                formErrors.email ? "ring-2 ring-red-500" : ""
-                              }`}
-                              required
-                            />
+                        {/* Phone Number & Email */}
+                        <div className="flex flex-col md:flex-row gap-4">
+                          <div className="w-full md:w-1/2">
+                            <label htmlFor="phone_number" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                              Phone Number
+                            </label>
+                            <div className="relative">
+                              <Input
+                                id="phone_number"
+                                name="phone_number"
+                                value={formData.phone_number}
+                                onChange={handleInputChange}
+                                placeholder="Phone Number"
+                                className={`bg-[#ceee8d] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${formErrors.phone_number ? "ring-2 ring-red-500" : ""}`}
+                                required
+                              />
+                            </div>
+                            {formErrors.phone_number && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.phone_number}</p>
+                            )}
                           </div>
-                          {formErrors.email && (
-                            <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label htmlFor="phone_number" className="text-sm font-medium text-[#003300]/70 mb-1 block">
-                            Phone Number
-                          </label>
-                          <div className="relative">
-                            <Input
-                              id="phone_number"
-                              name="phone_number"
-                              value={formData.phone_number}
-                              onChange={handleInputChange}
-                              placeholder="Phone Number"
-                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
-                                formErrors.phone_number ? "ring-2 ring-red-500" : ""
-                              }`}
-                              required
-                            />
+                          <div className="w-full md:w-1/2">
+                            <label htmlFor="email" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                              Email Address
+                            </label>
+                            <div className="relative">
+                              <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                placeholder="Email Address"
+                                className={`bg-[#ceee8d] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${formErrors.email ? "ring-2 ring-red-500" : ""}`}
+                                required
+                              />
+                            </div>
+                            {formErrors.email && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                            )}
                           </div>
-                          {formErrors.phone_number && (
-                            <p className="text-red-500 text-sm mt-1">{formErrors.phone_number}</p>
-                          )}
                         </div>
-
+                        {/* Address */}
                         <div>
                           <label htmlFor="address" className="text-sm font-medium text-[#003300]/70 mb-1 block">
                             Address
@@ -1314,9 +1570,7 @@ export default function Home() {
                               value={formData.address}
                               onChange={handleInputChange}
                               placeholder="Address"
-                              className={`bg-white border border-[#E5E8DF] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${
-                                formErrors.address ? "ring-2 ring-red-500" : ""
-                              }`}
+                              className={`bg-[#ceee8d] rounded-lg focus:border-[#8CC63F] focus:ring-0 transition-colors ${formErrors.address ? "ring-2 ring-red-500" : ""}`}
                               required
                             />
                           </div>
@@ -1324,7 +1578,6 @@ export default function Home() {
                             <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>
                           )}
                         </div>
-
                         <Button
                           type="submit"
                           disabled={loading}
@@ -1356,18 +1609,16 @@ export default function Home() {
                       <ArrowLeft size={24} />
                     </motion.button>
 
-                    {formSubmitted && (
-                      <motion.button
-                        onClick={resetForm}
-                        className="bg-[#003300] text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-[#002200] transition-colors shadow-md"
-                        variants={buttonVariants}
-                        initial="initial"
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        <RefreshCw size={24} />
-                      </motion.button>
-                    )}
+                    <motion.button
+                      onClick={nextStep}
+                      className="bg-[#003300] text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-[#002200] transition-colors shadow-md"
+                      variants={buttonVariants}
+                      initial="initial"
+                      whileHover="hover"
+                      whileTap="tap"
+                    >
+                      <ArrowRight size={24} />
+                    </motion.button>
                   </div>
                 </motion.div>
               </div>
@@ -1418,7 +1669,7 @@ export default function Home() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col items-center mt-4">
+          <div className="flex flex-col items-center mt-4 max-h-[70vh] overflow-y-auto w-full">
             {loading ? (
               <div className="flex flex-col items-center justify-center p-8">
                 <div className="animate-spin">
@@ -1431,7 +1682,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
-            ) : (
+            ) :
               <>
                 {tempImageUrl && (
                   <ReactCrop
@@ -1468,7 +1719,7 @@ export default function Home() {
                   </Button>
                 </div>
               </>
-            )}
+            }
           </div>
         </DialogContent>
       </Dialog>
