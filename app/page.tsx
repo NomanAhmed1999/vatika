@@ -51,9 +51,20 @@ const hairConcernLabels = {
 // Responsive CustomHeader component
 const CustomHeader = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div className="fixed top-0 left-0 w-full z-30">
+    <div className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-[#8cc63f]/90 backdrop-blur-md shadow-lg' : ''}`}>
       <div className="relative w-full h-[100px] md:h-[120px] flex items-center justify-between px-6 md:px-16">
         {/* Logo and oil drop */}
         <div className="flex items-center space-x-2">
@@ -685,6 +696,17 @@ export default function Home() {
     if (!bottleRef.current) return;
 
     try {
+      // Find and prepare any external images to avoid CORS issues
+      const images = bottleRef.current.querySelectorAll('img');
+      images.forEach(img => {
+        const originalSrc = img.getAttribute('src');
+        if (originalSrc && originalSrc.startsWith('http')) {
+          // Only proxy external images
+          img.crossOrigin = 'anonymous';
+          img.src = `/api/image-proxy?url=${encodeURIComponent(originalSrc)}`;
+        }
+      });
+
       const canvas = await html2canvas(bottleRef.current, {
         backgroundColor: null,
         scale: 2, // Higher quality
@@ -1187,17 +1209,17 @@ export default function Home() {
             </div>
           ) : currentStep === 4 ? (
             <div className="w-full min-h-[100vh] flex flex-col items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
-            {/* Background image with overlay */}
-            <div className="absolute inset-0 z-0 opacity-90">
-              <div
-                className="absolute inset-0 bg-cover bg-center hidden md:block"
-                style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
-              />
-              <div
-                className="absolute inset-0 bg-cover bg-center block md:hidden"
-                style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
-              />
-            </div>
+              {/* Background image with overlay */}
+              <div className="absolute inset-0 z-0 opacity-90">
+                <div
+                  className="absolute inset-0 bg-cover bg-center hidden md:block"
+                  style={{ backgroundImage: "url('/images/desktop-banner.jpg')" }}
+                />
+                <div
+                  className="absolute inset-0 bg-cover bg-center block md:hidden"
+                  style={{ backgroundImage: "url('/images/mob-banner.jpg')" }}
+                />
+              </div>
       
             {/* Main content: bottle, text, label */}
             <div className="w-full flex flex-col step4-frame md:flex-row items-center justify-center z-10 mt-12 md:mt-24 gap-6 md:gap-0">
@@ -1312,28 +1334,28 @@ export default function Home() {
             </div>
             {/* Navigation buttons for step 4 - fixed bottom right */}
             <div className="fixed bottom-6 right-6 z-50 flex gap-3">
-              <motion.button
-                onClick={prevStep}
-                className="bg-white/90 text-[#003300] rounded-full w-12 h-12 flex items-center justify-center hover:bg-white transition-colors shadow-md"
-                variants={buttonVariants}
-                initial="initial"
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <ArrowLeft size={24} />
-              </motion.button>
-              <motion.button
-                onClick={nextStep}
-                className="bg-[#003300] text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-[#002200] transition-colors shadow-md"
-                variants={buttonVariants}
-                initial="initial"
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <ArrowRight size={24} />
-              </motion.button>
+                  <motion.button
+                    onClick={prevStep}
+                    className="bg-white/90 text-[#003300] rounded-full w-12 h-12 flex items-center justify-center hover:bg-white transition-colors shadow-md"
+                    variants={buttonVariants}
+                    initial="initial"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <ArrowLeft size={24} />
+                  </motion.button>
+                  <motion.button
+                    onClick={nextStep}
+                    className="bg-[#003300] text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-[#002200] transition-colors shadow-md"
+                    variants={buttonVariants}
+                    initial="initial"
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <ArrowRight size={24} />
+                  </motion.button>
+              </div>
             </div>
-          </div>
           ) : currentStep === 5 ? (
             <div className="w-full min-h-[100vh] flex flex-col md:flex-row items-center justify-center px-4 md:px-8 lg:px-16 py-8 relative">
               {/* Background image with overlay */}
@@ -1355,8 +1377,8 @@ export default function Home() {
                   <img src="/images/box.png" alt="Box" className="h-[420px] w-auto mb-10" />
                 </div>
                 {/* Right side - Two bottles with frame overlay */}
-                <div className="flex justify-center items-center">
-                  <div className="relative flex flex-row items-end step5-frame gap-[-40px]" style={{ minWidth: '420px', height: '420px' }}>
+                <div className="flex justify-center items-center step5-frame">
+                  <div ref={bottleRef} className="relative flex flex-row items-end step5-frame gap-[-40px]" style={{ minWidth: '420px', height: '420px' }}>
                     {[0, 1].map((i) => (
                       <div key={i} className={i === 0 ? "-mr-32 z-10" : "z-20"} style={{ position: 'relative', width: '220px', height: '420px' }}>
                         {/* Frame overlay at top of bottle */}
@@ -1419,7 +1441,7 @@ export default function Home() {
 
                   {formSubmitted ? (
                     // Success message and share options
-                    <div className="bg-white/95 backdrop-blur-sm rounded-lg p-6 shadow-sm">
+                    <div className=" backdrop-blur-sm rounded-lg shadow-sm">
                       <div className="flex flex-col items-center mb-6">
                         <div className="relative">
                           <div className="w-24 h-24 rounded-full bg-[#8CC63F] flex items-center justify-center">
@@ -1427,8 +1449,8 @@ export default function Home() {
                           </div>
                           <div className="absolute -inset-2 border-2 border-[#8CC63F] rounded-full animate-pulse" />
                         </div>
-                        <h3 className="text-xl font-medium text-[#003300] mt-4">Success!</h3>
-                        <p className="text-center text-[#003300]/60 mt-2 text-sm">
+                        <h3 className="text-xl font-medium mt-4 text-white">Success!</h3>
+                        <p className="text-center text-white mt-2 text-sm">
                           Your Vatika Bestie Bottle has been created successfully. Share it with your bestie now!
                         </p>
                       </div>
@@ -1445,7 +1467,7 @@ export default function Home() {
                         Share Your Bestie Bottle
                       </motion.button>
 
-                      <div className="bg-white rounded-lg p-4 border border-[#E5E8DF]">
+                      {/* <div className="bg-white rounded-lg p-4 border border-[#E5E8DF]">
                         <h4 className="text-[#003300] font-medium text-base mb-2 text-left">Submission Details</h4>
                         <div className="text-[#003300]/80 text-sm text-left">
                           <div className="flex justify-between py-2 border-b border-[#E5E8DF]">
@@ -1469,7 +1491,7 @@ export default function Home() {
                             <span className="font-medium truncate max-w-[200px]">{formData.address}</span>
                           </div>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                   ) : (
                     // Contact form
@@ -1478,9 +1500,9 @@ export default function Home() {
                         {/* First Name & Last Name */}
                         <div className="flex flex-col md:flex-row gap-4">
                           <div className="w-full md:w-1/2">
-                            <label htmlFor="first_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                            {/* <label htmlFor="first_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
                               First Name
-                            </label>
+                            </label> */}
                             <div className="relative">
                               <Input
                                 id="first_name"
@@ -1497,9 +1519,9 @@ export default function Home() {
                             )}
                           </div>
                           <div className="w-full md:w-1/2">
-                            <label htmlFor="last_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                            {/* <label htmlFor="last_name" className="text-sm font-medium text-[#003300]/70 mb-1 block">
                               Last Name
-                            </label>
+                            </label> */}
                             <div className="relative">
                               <Input
                                 id="last_name"
@@ -1519,9 +1541,9 @@ export default function Home() {
                         {/* Phone Number & Email */}
                         <div className="flex flex-col md:flex-row gap-4">
                           <div className="w-full md:w-1/2">
-                            <label htmlFor="phone_number" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                            {/* <label htmlFor="phone_number" className="text-sm font-medium text-[#003300]/70 mb-1 block">
                               Phone Number
-                            </label>
+                            </label> */}
                             <div className="relative">
                               <Input
                                 id="phone_number"
@@ -1538,9 +1560,9 @@ export default function Home() {
                             )}
                           </div>
                           <div className="w-full md:w-1/2">
-                            <label htmlFor="email" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                            {/* <label htmlFor="email" className="text-sm font-medium text-[#003300]/70 mb-1 block">
                               Email Address
-                            </label>
+                            </label> */}
                             <div className="relative">
                               <Input
                                 id="email"
@@ -1560,9 +1582,9 @@ export default function Home() {
                         </div>
                         {/* Address */}
                         <div>
-                          <label htmlFor="address" className="text-sm font-medium text-[#003300]/70 mb-1 block">
+                          {/* <label htmlFor="address" className="text-sm font-medium text-[#003300]/70 mb-1 block">
                             Address
-                          </label>
+                          </label> */}
                           <div className="relative">
                             <Textarea
                               id="address"
@@ -1581,7 +1603,7 @@ export default function Home() {
                         <Button
                           type="submit"
                           disabled={loading}
-                          className="w-full bg-[#8CC63F] hover:bg-[#6AAD1D] text-white py-3 h-auto text-base font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                          className="w-full overthink bg-[#469a03] hover:bg-[#6AAD1D] text-white py-3 h-auto text-base font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                         >
                           {loading ? (
                             <div className="flex items-center justify-center">
@@ -1589,7 +1611,7 @@ export default function Home() {
                               Submitting...
                             </div>
                           ) : (
-                            "Submit & Complete"
+                            "Send the gift to your bestie!"
                           )}
                         </Button>
                       </div>

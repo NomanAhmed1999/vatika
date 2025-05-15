@@ -88,8 +88,9 @@ body {
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+ html, body {
+    @apply bg-background text-foreground  h-full w-full overflow-x-hidden;
+;
   }
 }
 
@@ -112,7 +113,7 @@ body {
     margin-top: 300px !important;
   }
   .step5-frame {
-    margin-top: 400px !important;
+    margin-top: 300px !important;
   }
   .step4-frame {
     margin-top: 360px !important;

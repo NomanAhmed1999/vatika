@@ -23,36 +23,52 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
     return () => clearInterval(interval);
   }, [bottleRef]);
 
-  // const handleDownload = async () => {
-  //   if (!bottleRef.current) return;
-  //   const canvas = await html2canvas(bottleRef.current);
-  //   const link = document.createElement('a');
-  //   link.download = 'bestie-bottle.png';
-  //   link.href = canvas.toDataURL();
-  //   link.click();
-  // };
-
+  // Prepare images for html2canvas to avoid CORS issues
+  const prepareForCapture = () => {
+    if (!bottleRef.current) return;
+    
+    // Find all images in the bottleRef
+    const images = bottleRef.current.querySelectorAll('img');
+    
+    // Add crossOrigin attribute and update source to use our proxy
+    images.forEach(img => {
+      const originalSrc = img.getAttribute('src');
+      if (originalSrc && originalSrc.startsWith('http')) {
+        // Only proxy external images
+        img.crossOrigin = 'anonymous';
+        img.src = `/api/image-proxy?url=${encodeURIComponent(originalSrc)}`;
+      }
+    });
+  };
 
   const handleDownload = async () => {
     if (bottleRef.current) {
       setImageLoaded(false);
-      let bestiesName = bottleRef.current.querySelector('#besties-name');
-      console.log(bestiesName);
       
-      bestiesName?.classList.add('pb-4');
-      const canvas = await html2canvas(bottleRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-      });
+      try {
+        // Prepare images for capture
+        prepareForCapture();
+        
+        // Capture the element
+        const canvas = await html2canvas(bottleRef.current, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          scale: 2, // Higher quality
+          logging: true
+        });
 
-      bestiesName?.classList.remove('pb-4');
-      setImageLoaded(true);
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'besties.png';
-      link.click();
+        setImageLoaded(true);
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'vatika-bestie-bottle.png';
+        link.click();
+      } catch (error) {
+        console.error("Error generating image:", error);
+        setImageLoaded(true); // Reset the button state even on error
+        alert("Failed to generate image. Please try again.");
+      }
     }
   };
   
@@ -63,32 +79,58 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
 
   const handleWhatsAppShare = () => {
     const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent('Check out this image!');
+    const text = encodeURIComponent('Check out my Vatika Bestie Bottle!');
     window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
   };
+  
   const handleShare = async () => {
     if (!bottleRef.current) return;
-    const canvas = await html2canvas(bottleRef.current);
+    
+    try {
+      setImageLoaded(false);
+      
+      // Prepare images for capture
+      prepareForCapture();
+      
+      // Capture the element
+      const canvas = await html2canvas(bottleRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        scale: 2, // Higher quality
+        logging: true
+      });
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-
-      const file = new File([blob], 'bestie-bottle.png', { type: 'image/png' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: 'Bestie Bottle',
-            text: 'Check out our Bestie Bottle!',
-            files: [file],
-          });
-        } catch (err) {
-          alert("Sharing failed or cancelled.");
+      canvas.toBlob(async (blob) => {
+        setImageLoaded(true);
+        
+        if (!blob) {
+          alert("Failed to create image. Please try again.");
+          return;
         }
-      } else {
-        alert("Sharing is not supported on this browser.");
-      }
-    }, 'image/png');
+
+        const file = new File([blob], 'vatika-bestie-bottle.png', { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'Vatika Bestie Bottle',
+              text: 'Check out our Vatika Bestie Bottle!',
+              files: [file],
+            });
+          } catch (err) {
+            console.error("Sharing failed:", err);
+            alert("Sharing failed or was cancelled.");
+          }
+        } else {
+          alert("Native sharing is not supported on this browser. Try using the social share buttons instead.");
+        }
+      }, 'image/png');
+    } catch (error) {
+      console.error("Error generating image for sharing:", error);
+      setImageLoaded(true); // Reset the button state even on error
+      alert("Failed to generate image for sharing. Please try again.");
+    }
   };
 
   return (
@@ -112,8 +154,7 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
             <button onClick={onClose} className="text-gray-600 underline mt-4">
                 Close
             </button>
-            </div>
-
+        </div>
       </div>
     </div>
   );
