@@ -85,7 +85,7 @@ export default function Dashboard() {
   const fetchStats = async () => {
     try {
       if (!userData?.access_token) return;
-      const res = await getApi("api/customer", userData.access_token);
+      const res = await getApi("api/customer/", userData.access_token);
       if (!res.ok) return;
       const data = await res.json();
       setStats({
@@ -120,7 +120,7 @@ export default function Dashboard() {
 
   const fetchCustomer = async () => {
     try {
-      let url = "api/customer";
+      let url = "api/customer/";
       const params = new URLSearchParams();
       
       if (search) {
