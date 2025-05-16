@@ -35,6 +35,7 @@ import Webcam from "react-webcam"
 import html2canvas from 'html2canvas'
 import Link from "next/link"
 import Image from "next/image"
+import Cropper, { Area, Point } from 'react-easy-crop'
 
 const hairConcernColors = {
   dull_weak: "bg-fuchsia-800",
@@ -175,13 +176,9 @@ export default function Home() {
   const [isImageOptionsOpen, setIsImageOptionsOpen] = useState(false)
   const [isCropModalOpen, setIsCropModalOpen] = useState(false)
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null)
-  const [crop, setCrop] = useState<Crop>({
-    unit: "%",
-    width: 80,
-    height: 80,
-    x: 10,
-    y: 10,
-  })
+  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const imageRef = useRef<HTMLImageElement | null>(null)
 
   const [formErrors, setFormErrors] = useState({
@@ -359,8 +356,8 @@ export default function Home() {
     }
   }
 
-  const handleCropComplete = (crop: Crop) => {
-    setCrop(crop)
+  const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels)
   }
 
   const handleCropCancel = () => {
@@ -372,133 +369,130 @@ export default function Home() {
   }
 
   const handleCropSave = async () => {
-    if (tempImageUrl && imageRef.current && crop.width && crop.height) {
+    if (tempImageUrl && croppedAreaPixels) {
       try {
-        setLoading(true);
-        setImageError(""); // Clear any previous errors
-        const canvas = document.createElement("canvas");
-        const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
-        const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
-        const ctx = canvas.getContext("2d");
-  
+        setLoading(true)
+        setImageError("")
+
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
         if (!ctx) {
-          throw new Error("Failed to get canvas context");
+          throw new Error("Failed to get canvas context")
         }
-  
-        const pixelRatio = window.devicePixelRatio;
-  
-        canvas.width = crop.width * scaleX;
-        canvas.height = crop.height * scaleY;
-  
-        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        ctx.imageSmoothingQuality = "high";
-  
+
+        const image = new window.Image()
+        image.src = tempImageUrl
+        await new Promise<void>((resolve) => {
+          image.onload = () => resolve()
+        })
+
+        const scaleX = image.naturalWidth / image.width
+        const scaleY = image.naturalHeight / image.height
+
+        canvas.width = croppedAreaPixels.width
+        canvas.height = croppedAreaPixels.height
+
         ctx.drawImage(
-          imageRef.current,
-          crop.x * scaleX,
-          crop.y * scaleY,
-          crop.width * scaleX,
-          crop.height * scaleY,
+          image,
+          croppedAreaPixels.x * scaleX,
+          croppedAreaPixels.y * scaleY,
+          croppedAreaPixels.width * scaleX,
+          croppedAreaPixels.height * scaleY,
           0,
           0,
-          crop.width * scaleX,
-          crop.height * scaleY
-        );
-  
-        // Convert canvas to blob
+          croppedAreaPixels.width,
+          croppedAreaPixels.height
+        )
+
         const blob = await new Promise<Blob | null>((resolve) => {
-          canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95);
-        });
-  
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95)
+        })
+
         if (!blob) {
-          throw new Error("Failed to create image blob");
+          throw new Error("Failed to create image blob")
         }
-  
-        // Create a new file from the blob
-        const croppedFile = new File([blob], "cropped-image.jpg", { type: "image/jpeg" });
-  
-        // Map the selected hair concern to its background color
-        const selectedHairConcern = formData.hairConcerns[0];
+
+        const croppedFile = new File([blob], "cropped-image.jpg", { type: "image/jpeg" })
+
+        const selectedHairConcern = formData.hairConcerns[0]
         const colorMap: { [key: string]: string } = {
           dull_weak: "#86198f",
           dry_frizzy: "#f97316",
-          hair_fall: "#a855f7",
-        };
-        const backgroundColor = colorMap[selectedHairConcern] || "#FFFFFF";
-  
-        // Process the cropped image
-        const formDataToSend = new FormData();
-        formDataToSend.append("image", croppedFile);
-        formDataToSend.append("background_color", backgroundColor);
-  
-        const response = await postWithFile("api/image-processing/", formDataToSend, null);
-  
+          hair_fall: "#86198f",
+        }
+        const backgroundColor = colorMap[selectedHairConcern] || "#FFFFFF"
+
+        const formDataToSend = new FormData()
+        formDataToSend.append("image", croppedFile)
+        formDataToSend.append("background_color", backgroundColor)
+
+        const response = await postWithFile("api/image-processing/", formDataToSend, null)
+
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error("API Error:", errorData);
+          const errorData = await response.json()
+          console.error("API Error:", errorData)
           
-          // Handle different types of API errors
-          let errorMessage = "Failed to process image";
+          let errorMessage = "Failed to process image"
           
           if (errorData.detail) {
-            errorMessage = errorData.detail;
+            errorMessage = errorData.detail
           } else if (errorData.message) {
-            errorMessage = errorData.message;
+            errorMessage = errorData.message
           } else if (errorData.error) {
-            errorMessage = errorData.error;
+            errorMessage = errorData.error
           } else if (typeof errorData === 'string') {
-            errorMessage = errorData;
+            errorMessage = errorData
           } else if (Array.isArray(errorData)) {
-            errorMessage = errorData.join(", ");
+            errorMessage = errorData.join(", ")
           }
           
-          setImageError(errorMessage);
+          setImageError(errorMessage)
           toast({
             title: "Error",
             description: errorMessage,
             variant: "destructive",
-          });
-          return;
+          })
+          return
         }
-  
-        const data = await response.json();
-  
+
+        const data = await response.json()
+
         if (data.image_url) {
           setFormData((prev) => ({
             ...prev,
             image_url: data.image_url,
             background_color: data.background_color,
-          }));
-  
-          setProcessedImageUrl(data.image_url);
-  
-          const croppedUrl = URL.createObjectURL(blob);
-          setPreviewUrl(croppedUrl);
-  
+          }))
+
+          setProcessedImageUrl(data.image_url)
+
+          const croppedUrl = URL.createObjectURL(blob)
+          setPreviewUrl(croppedUrl)
+
           if (tempImageUrl) {
-            URL.revokeObjectURL(tempImageUrl);
-            setTempImageUrl(null);
+            URL.revokeObjectURL(tempImageUrl)
+            setTempImageUrl(null)
           }
-  
-          setIsCropModalOpen(false);
-          setImageError("");
+
+          setIsCropModalOpen(false)
+          setImageError("")
         } else {
-          throw new Error("Response does not contain required fields");
+          throw new Error("Response does not contain required fields")
         }
       } catch (error: any) {
-        console.error("Error in handleCropSave:", error);
-        const errorMessage = error.message || "Failed to process image. Please try again.";
-        setImageError(errorMessage);
+        console.error("Error in handleCropSave:", error)
+        const errorMessage = error.message || "Failed to process image. Please try again."
+        setImageError(errorMessage)
         toast({
           title: "Error",
           description: errorMessage,
           variant: "destructive",
-        });
+        })
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -1704,31 +1698,86 @@ export default function Home() {
                   </div>
                 )}
               </div>
-            ) :
+            ) : (
               <>
                 {tempImageUrl && (
-                  <ReactCrop
-                    crop={crop}
-                    onChange={(c) => setCrop(c)}
-                    onComplete={handleCropComplete}
-                    aspect={1}
-                    circularCrop
-                  >
-                    <img
-                      ref={imageRef}
-                      src={tempImageUrl}
-                      alt="Crop preview"
-                      className="max-h-[30vh] md:max-h-[50vh] w-full object-contain"
+                  <div className="relative w-full h-[300px] md:h-[400px] bg-black/5 rounded-lg overflow-hidden">
+                    <Cropper
+                      image={tempImageUrl}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                      cropShape="round"
+                      showGrid={true}
+                      objectFit="contain"
+                      classes={{
+                        containerClassName: "rounded-lg",
+                        cropAreaClassName: "rounded-full",
+                      }}
                     />
-                  </ReactCrop>
+                  </div>
                 )}
+                
+                {/* Enhanced Controls */}
+                <div className="w-full mt-6 px-4 space-y-4">
+                  {/* Zoom Controls */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Zoom</span>
+                      <span className="text-sm text-gray-600">{Math.round(zoom * 100)}%</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => setZoom(Math.max(1, zoom - 0.1))}
+                        className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      <input
+                        type="range"
+                        min={1}
+                        max={3}
+                        step={0.1}
+                        value={zoom}
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                        className="flex-1"
+                      />
+                      <button
+                        onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+                        className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="text-sm text-gray-500 text-center">
+                    <p>Pinch to zoom or use the slider</p>
+                    <p>Drag to adjust the crop area</p>
+                  </div>
+                </div>
+
                 {imageError && (
                   <div className="text-red-600 text-center mt-4 font-semibold">
                     {imageError}
                   </div>
                 )}
+
+                {/* Action Buttons */}
                 <div className="flex justify-between w-full mt-6">
-                  <Button onClick={handleCropCancel} variant="outline" className="border-[#003300] text-[#003300]">
+                  <Button 
+                    onClick={handleCropCancel} 
+                    variant="outline" 
+                    className="border-[#003300] text-[#003300] hover:bg-gray-100"
+                  >
                     Cancel
                   </Button>
 
@@ -1737,11 +1786,18 @@ export default function Home() {
                     className="bg-[#8CC63F] hover:bg-[#6AAD1D] text-white"
                     disabled={loading}
                   >
-                    {loading ? "Processing..." : "Apply Crop"}
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="animate-spin h-4 w-4" />
+                        Processing...
+                      </div>
+                    ) : (
+                      "Apply Crop"
+                    )}
                   </Button>
                 </div>
               </>
-            }
+            )}
           </div>
         </DialogContent>
       </Dialog>
