@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, use } from "react"
 import {
   ArrowRight,
   ArrowLeft,
@@ -139,6 +139,7 @@ const CustomHeader = () => {
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(0)
+  const [isFlavourChanged, setIsFlavourChanged] = useState(false)
   const [formData, setFormData] = useState({
     customer_name: "",
     bestie_name: "",
@@ -233,6 +234,16 @@ export default function Home() {
       setIsImageOptionsOpen(false)
     }
   }
+
+  useEffect(() => {
+    // console.log("File changed:", file);
+    if (file && isFlavourChanged) {
+      setPreviewUrl(null)
+      setFile(null)
+    }
+    setIsFlavourChanged(false)
+  }, [file, isFlavourChanged])
+
 
   const nextStep = () => {
     // Validate current step before proceeding
@@ -544,7 +555,8 @@ export default function Home() {
     setFormData(prev => ({
       ...prev,
       hairConcerns: [value]
-    }))
+    }));
+    setIsFlavourChanged(true)
   }
 
   const validateForm = () => {
