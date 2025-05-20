@@ -909,7 +909,7 @@ export default function Home() {
                   <div className="relative step1-frame w-[250px] h-[250px] md:w-[300px] md:h-[300px] mt-32 rounded-full bg-transparent overflow-hidden border-8 border-[#fcde57] shadow-xl flex items-center justify-center">
                     {/* Text inside the circle */}
                     <div className="text-[#003300] bg-[#fcde57] w-full mt-[200px] text-center px-8">
-                      <div className="text-xl font-bold">
+                      <div className="font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
                     </div>
@@ -1024,7 +1024,7 @@ export default function Home() {
                       </svg>
                     </div>
                     <div className="text-[#003300] bg-[#fcde57] w-full mt-[200px] text-center px-8">
-                    <div className="text-xl font-bold">
+                    <div className=" font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
                       </div>
@@ -1126,7 +1126,7 @@ export default function Home() {
                     )}
                     {/* Names at bottom */}
                     <div className="text-[#003300] relative bg-[#fcde57] w-full mt-[200px] text-center px-8">
-                    <div className="text-xl font-bold">
+                    <div className=" font-bold">
                         {displayNames() || "Enter Your Names"}
                       </div>
                       </div>
@@ -1247,8 +1247,10 @@ export default function Home() {
                           className="w-full h-full"
                         />
                         {/* Display names inside the circle at the bottom */}
-                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[10px] md:text-xs shadow truncate text-center">
+                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[5px] md:text-xs shadow truncate text-center" style={{fontSize: "8px"}}>
+                        <div>
                           {typeof displayNames !== "undefined" && displayNames()}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1397,12 +1399,16 @@ export default function Home() {
                                   alt="Besties"
                                   className="w-full h-full"
                                 />
-                                {/* Display names inside the circle at the bottom */}
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-4 w-full text-[#003300] font-bold text-xs shadow">
-                                {displayNames()}
-                      </div>
-                    </div>
-                  </div>
+                                {/* Yellow background and centered text for download */}
+                                <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '6px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                  <div className="bg-[#fcde57] rounded-full w-full h-[20px] flex items-center justify-center" style={{ position: 'relative', top: '-6px' }}>
+                                    <span className="text-[#003300] truncate font-bold text-center w-full" style={{ lineHeight: '22px', fontSize: '10px', transform: 'translateY(-2px)' }}>
+                                      {displayNames()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )}
                         {/* Bottle image */}
