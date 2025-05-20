@@ -165,6 +165,7 @@ export default function Home() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const bottleRef = useRef<HTMLDivElement | null>(null)
   const [isComplete, setIsComplete] = useState(false)
+  const [isDownload, setIsDownload] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -1247,7 +1248,7 @@ export default function Home() {
                           className="w-full h-full"
                         />
                         {/* Display names inside the circle at the bottom */}
-                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[5px] md:text-xs shadow truncate text-center" style={{fontSize: "8px"}}>
+                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold shadow text-center" style={{fontSize: "8px"}}>
                         <div>
                           {typeof displayNames !== "undefined" && displayNames()}
                           </div>
@@ -1292,13 +1293,13 @@ export default function Home() {
               </div>
       
               {/* Right: Label image with frame overlay */}
-              <div className="flex flex-col items-center border rounded-lg border-[#daf2a9] justify-center relative h-[350px] md:h-[420px] w-[180px] md:w-[220px]">
+              <div ref={bottleRef} className="flex flex-col items-center border rounded-lg border-[#daf2a9] justify-center relative h-[350px] md:h-[420px] w-[180px] md:w-[220px]">
                 {/* Frame overlay at top of label */}
                 {((typeof processedImageUrl !== "undefined" && processedImageUrl) ||
                   (typeof previewUrl !== "undefined" && previewUrl)) && (
                   <div className="absolute left-1/2 -translate-x-1/2 z-20 top-0 w-[160px] md:w-[200px]">
                     <div className="relative w-full h-auto mt-[30px] md:mt-[40px] flex flex-col items-center">
-                      <div className="w-[90px] h-[90px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden border-2 border-[#fcde57] bg-white mx-auto shadow-lg relative">
+                      <div className="w-[100px] h-[100px] md:w-[130px] md:h-[130px] rounded-full overflow-hidden border-2 border-[#fcde57] bg-white mx-auto shadow-lg relative">
                         <img
                           src={
                             (typeof processedImageUrl !== "undefined" && processedImageUrl) ||
@@ -1309,7 +1310,7 @@ export default function Home() {
                           className="w-full h-full"
                         />
                         {/* Display names inside the circle at the bottom */}
-                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[10px] md:text-xs shadow truncate text-center">
+                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[8px] md:text-[10px] shadow text-center">
                           {typeof displayNames !== "undefined" && displayNames()}
                         </div>
                       </div>
@@ -1379,17 +1380,69 @@ export default function Home() {
               </div>
 
               {/* Main content row: left image/box, right bottles */}
-              <div className="w-full flex flex-row items-center justify-center ml-[130px] z-10 mt-24">
-                {/* Left side - Box or image */}
-                <div className="hidden md:flex flex-col items-center justify-center">
-                  <img src="/images/box.png" alt="Box" className="h-[420px] w-auto mb-10" />
-                </div>
-                {/* Right side - Two bottles with frame overlay */}
-                <div className="flex justify-center items-center step5-frame">
-                  <div ref={bottleRef} className="relative flex flex-row items-end step5-frame gap-[-40px]" style={{ minWidth: '420px', height: '420px' }}>
+                        <div className="w-full flex flex-row items-center justify-center ml-[130px] z-10 mt-24">
+                          {/* Left side - Box or image */}
+                          <div className="hidden md:flex flex-col items-center justify-center">
+                            <img src="/images/box.png" alt="Box" className="h-[420px] w-auto mb-10" />
+                          </div>
+                          {/* Right side - Two bottles with frame overlay */}
+                          <div className="flex justify-center items-center step5-frame">
+                            <div className="relative flex flex-row items-end step5-frame gap-[-40px]" style={{ minWidth: '420px', height: '420px' }}>
+                              {
+                                isDownload && (
+                                  <div ref={bottleRef} className="flex flex-col items-center border rounded-lg border-[#daf2a9] justify-center absolute bottom-12 h-[350px] md:h-[420px] w-[180px] md:w-[220px]">
+                                    {/* Frame overlay at top of label */}
+                                    {((typeof processedImageUrl !== "undefined" && processedImageUrl) ||
+                                      (typeof previewUrl !== "undefined" && previewUrl)) && (
+                                        <div className="absolute left-1/2 -translate-x-1/2 z-20 top-0 w-[160px] md:w-[200px]">
+                                          <div className="relative w-full h-auto mt-[30px] md:mt-[40px] flex flex-col items-center">
+                                            <div className="w-[100px] h-[100px] md:w-[130px] md:h-[130px] rounded-full overflow-hidden border-2 border-[#fcde57] bg-white mx-auto shadow-lg relative">
+                                              <img
+                                                src={
+                                                  (typeof processedImageUrl !== "undefined" && processedImageUrl) ||
+                                                  (typeof previewUrl !== "undefined" && previewUrl) ||
+                                                  ""
+                                                }
+                                                alt="Besties"
+                                                className="w-full h-full"
+                                              />
+                                              {/* Display names inside the circle at the bottom */}
+                                              <div className="absolute bottom-2 pb-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[8px] md:text-[10px] shadow text-center"
+                                              >
+                                                {typeof displayNames !== "undefined" && displayNames()}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    {/* Label image */}
+                                    {typeof formData !== "undefined" && formData.hairConcerns[0] === "dull_weak" && (
+                                      <img
+                                        src="/images/black-label.png"
+                                        alt="Black Label"
+                                        className="h-[320px] md:h-[400px] w-auto object-contain"
+                                      />
+                                    )}
+                                    {typeof formData !== "undefined" && formData.hairConcerns[0] === "dry_frizzy" && (
+                                      <img
+                                        src="/images/orange-label.png"
+                                        alt="Orange Label"
+                                        className="h-[320px] md:h-[400px] w-auto object-contain"
+                                      />
+                                    )}
+                                    {typeof formData !== "undefined" && formData.hairConcerns[0] === "hair_fall" && (
+                                      <img
+                                        src="/images/purple-label.png"
+                                        alt="Purple Label"
+                                        className="h-[320px] md:h-[400px] w-auto object-contain"
+                                      />
+                                    )}
+                                  </div>
+                                )
+                              }
                     {[0, 1].map((i) => (
                       <div key={i} className={i === 0 ? "-mr-32 z-10" : "z-20"} style={{ position: 'relative', width: '220px', height: '420px' }}>
-                        {/* Frame overlay at top of bottle */}
+                        
                         {(processedImageUrl || previewUrl) && (
                           <div className="absolute left-1/3 mt-20 -translate-x-1/2 mb-[140px] z-20" style={{ width: '200px', height: '120px' }}>
                             <div className="relative w-[200px] h-[120px] flex flex-col items-center">
@@ -1399,19 +1452,15 @@ export default function Home() {
                                   alt="Besties"
                                   className="w-full h-full"
                                 />
-                                {/* Yellow background and centered text for download */}
-                                <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '6px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                  <div className="bg-[#fcde57] rounded-full w-full h-[20px] flex items-center justify-center" style={{ position: 'relative', top: '-6px' }}>
-                                    <span className="text-[#003300] truncate font-bold text-center w-full" style={{ lineHeight: '22px', fontSize: '10px', transform: 'translateY(-2px)' }}>
-                                      {displayNames()}
-                                    </span>
+                              
+                                <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 bg-[#fcde57] px-2 md:px-4 w-full text-[#003300] font-bold text-[8px] md:text-[8px] shadow text-center">
+                                    {typeof displayNames !== "undefined" && displayNames()}
                                   </div>
-                                </div>
                               </div>
                             </div>
                           </div>
                         )}
-                        {/* Bottle image */}
+                        
                         {formData.hairConcerns[0] === "dull_weak" && (
                           <img 
                             src="/images/black-bottle.png" 
@@ -1468,7 +1517,7 @@ export default function Home() {
                       </div>
 
                       <motion.button
-                        onClick={() => setIsShareModalOpen(true)}
+                        onClick={() =>{ setIsShareModalOpen(true); setIsDownload(true);}}
                         className="bg-[#6AAD1D] text-white w-full px-6 py-3 rounded-lg font-medium text-base hover:bg-[#5A9618] transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow-md mb-6"
                         variants={buttonVariants}
                         initial="initial"
@@ -1478,32 +1527,6 @@ export default function Home() {
                         <Share2 size={18} />
                         Share Your Bestie Bottle
                       </motion.button>
-
-                      {/* <div className="bg-white rounded-lg p-4 border border-[#E5E8DF]">
-                        <h4 className="text-[#003300] font-medium text-base mb-2 text-left">Submission Details</h4>
-                        <div className="text-[#003300]/80 text-sm text-left">
-                          <div className="flex justify-between py-2 border-b border-[#E5E8DF]">
-                            <span>FirstName:</span>
-                            <span className="font-medium">{formData.first_name}</span>
-                          </div>
-                          <div className="flex justify-between py-2 border-b border-[#E5E8DF]">
-                          <span>LastName:</span>
-                            <span className="font-medium">{formData.last_name}</span>
-                          </div>
-                          <div className="flex justify-between py-2 border-b border-[#E5E8DF]">
-                            <span>Email:</span>
-                            <span className="font-medium">{formData.email}</span>
-                          </div>
-                          <div className="flex justify-between py-2 border-b border-[#E5E8DF]">
-                            <span>Phone:</span>
-                            <span className="font-medium">{formData.phone_number}</span>
-                          </div>
-                          <div className="flex justify-between py-2">
-                            <span>Address:</span>
-                            <span className="font-medium truncate max-w-[200px]">{formData.address}</span>
-                          </div>
-                        </div>
-                      </div> */}
                     </div>
                   ) : (
                     // Contact form
@@ -1821,7 +1844,7 @@ export default function Home() {
       </Dialog>
 
       {/* Share Modal */}
-      {isShareModalOpen && <ShareModal onClose={() => setIsShareModalOpen(false)} bottleRef={bottleRef} />}
+      {isShareModalOpen && <ShareModal onClose={() => {setIsShareModalOpen(false); setIsDownload(false)}} bottleRef={bottleRef} />}
 
       {/* Webcam Modal */}
       <Dialog open={isWebcamModalOpen} onOpenChange={setIsWebcamModalOpen}>
