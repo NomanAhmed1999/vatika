@@ -77,12 +77,48 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
   };
 
-  const handleWhatsAppShare = () => {
-    const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent('Check out my Vatika Bestie Bottle!');
-    window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
-  };
+  // const handleWhatsAppShare = () => {
+  //   const url = encodeURIComponent(window.location.href);
+  //   const text = encodeURIComponent('Check out my Vatika Bestie Bottle!');
+  //   window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+  // };
   
+  const handleWhatsAppShare = async () => {
+  if (!bottleRef.current) return;
+
+  try {
+    const canvas = await html2canvas(bottleRef.current, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      scale: 2,
+    });
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return alert("Image creation failed");
+
+      const file = new File([blob], 'vatika-bottle.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Vatika Bestie Bottle',
+          text: 'Check out my Vatika Bestie Bottle!',
+          files: [file],
+        });
+      } else {
+        // Fallback for unsupported devices: just share the URL
+        const text = encodeURIComponent('Check out my Vatika Bestie Bottle!');
+        const url = encodeURIComponent(window.location.href);
+        window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+      }
+    }, 'image/png');
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong");
+  }
+};
+
+
   const handleShare = async () => {
     if (!bottleRef.current) return;
     
