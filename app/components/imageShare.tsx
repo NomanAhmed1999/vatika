@@ -108,8 +108,9 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
       } else {
         // Fallback for unsupported devices: just share the URL
         const text = encodeURIComponent('Check out my Vatika Bestie Bottle!');
-        const url = encodeURIComponent(window.location.href);
-        window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+        // const url = encodeURIComponent(window.location.href);
+        // window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+        window.location.href = `intent://send/?text=${text}#Intent;package=com.whatsapp;scheme=whatsapp;end`;
       }
     }, 'image/png');
   } catch (error) {
@@ -175,13 +176,13 @@ const ShareModal = ({ onClose, bottleRef }: { onClose: () => void, bottleRef: Re
         <h2 className="text-2xl font-bold mb-4">Share Your Bestie Bottle</h2>
         <p className="mb-6 text-gray-600">Download or share the awesome photo you created!</p>
         <div className="flex flex-col gap-4">
-            <button onClick={handleDownload} disabled={!imageLoaded} className={`bg-green-600 text-white py-2 rounded hover:bg-green-700 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <button onClick={handleDownload} disabled={!imageLoaded} className={`bg-blue-600 text-white py-2 rounded hover:bg-blue-700 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 {imageLoaded ? 'Download Image' : 'Loading...'}
             </button>
-            <button onClick={handleShare} disabled={!imageLoaded} className={`bg-blue-600 text-white py-2 rounded hover:bg-blue-700 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            {/* <button onClick={handleShare} disabled={!imageLoaded} className={`bg-blue-600 text-white py-2 rounded hover:bg-blue-700 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 {imageLoaded ? 'Share (Mobile)' : 'Loading...'}
-            </button>
-            <button onClick={handleWhatsAppShare} disabled={!imageLoaded} className={`bg-green-500 text-white py-2 rounded hover:bg-green-600 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            </button> */}
+            <button onClick={handleShare} disabled={!imageLoaded} className={`bg-green-500 text-white py-2 rounded hover:bg-green-600 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 {imageLoaded ? 'Share on WhatsApp' : 'Loading...'}
             </button>
             <button onClick={handleFacebookShare} disabled={!imageLoaded} className={`bg-blue-800 text-white py-2 rounded hover:bg-blue-900 ${!imageLoaded ? 'opacity-50 cursor-not-allowed' : ''}`}>
